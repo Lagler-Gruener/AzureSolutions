@@ -1,6 +1,6 @@
   <#
     .SYNOPSIS
-        The core script for the whole solution.
+        The core script for the whole solution..
         
     .DESCRIPTION
          Script was executed by Azure WebHook (webhookrg, webhookad).
@@ -13,7 +13,7 @@
         Script check the following (webhookad):
             1.) Get configuration from configuration table
             2.) Add information to the "on-premqueue" queue
-        
+
     .EXAMPLE
         -    
 
