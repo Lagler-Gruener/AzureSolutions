@@ -39,6 +39,6 @@ jobs:
           # Blob Container name (e.g. my-container).
           container_name: testcontainer
           # The local folder containing all the files and subfolders to upload to the blob container (use a trailing slash)
-          source_folder: src/AzureSolutions/Mappingtool/PSModules/Custom/Deploy/
+          source_folder: /home/runner/work/AzureSolutions/AzureSolutions/Mappingtool/PSModules/Custom/Deploy/
           # This option will delete all the blobs in destination_folder before uploading the new files
           clean_destination_folder: true
