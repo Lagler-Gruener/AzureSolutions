@@ -39,7 +39,11 @@ param (
     [object] $WebhookData,
 
     [parameter (Mandatory=$false)]
-    $ChannelURL
+    $ChannelURL,
+
+    [parameter (Mandatory=$false)]
+    [ValidateSet('true','false')]
+    $DebugScript
 )
 
 #######################################################################################################################
@@ -67,11 +71,11 @@ function CallRBCreateAADGroup()
 
     $disableresult = Disable-AzContextAutosave –Scope Process
 
-    $params = @{"Source"="RG";"AZRGName"=$AZRGName;"AADGroupParameters"=$aadgroupparameters}    
+    $params = @{"Source"="RG";"AZRGName"=$AZRGName;"AADGroupParameters"=$aadgroupparameters;"WorkflowID"=$wfguid}    
 
     return Start-AzAutomationRunbook `
                     –AutomationAccountName $global:ConfAutoAcc `
-                    –Name 'TaskNewAADGroup' `
+                    –Name 'TaskAADGroup' `
                     -ResourceGroupName $global:ConfApplRG `
                     –Parameters $params
 }
@@ -84,11 +88,36 @@ function CallRBCreateAADGroup()
 #region Script start      
 
     try 
-    {  
-                 
+    {              
+        $wfguid = GenerateWorkflowGuid
+        Write-Output "WorkflowGuid: $wfguid"
+
+        if($DebugScript -eq "true")
+        {
+            $webhook = $WebhookData | ConvertFrom-Json
+        }
+        else {
+            $webhook = $WebhookData
+        }
+
         Write-Output "Connect to Azure"
         Write-Output "----------------------------------------------------------------"
-            $loginazureresult = Login-Azure   
+            if($webhook.WebhookName -eq $global:HCRGWebhook)
+            {
+                Write-Output "Webhook type is $global:HCRGWebhook"
+                Write-Output "----------------------------------------------------------------"
+
+                Write-Output "Convert Webhook body to JSON"
+                Write-Output "----------------------------------------------------------------"
+                    $RequestBody = $webhook.RequestBody | ConvertFrom-Json
+                    $requestdata = $RequestBody.data
+                Write-Output "----------------------------------------------------------------"
+                
+                    $loginazureresult = Login-Azure -SubscriptionID $requestdata.subscriptionId
+            }            
+            else {
+                $loginazureresult = Login-Azure   
+            }
         
         if($loginazureresult.ReturnMsg -eq [ReturnCode]::Success)
         {
@@ -100,6 +129,7 @@ function CallRBCreateAADGroup()
             Write-Output "----------------------------------------------------------------"
                 $ctx = New-AzStorageContext -StorageAccountName $global:ConfApplStrAcc -UseConnectedAccount   
 
+                #section storage context
                 if($null -ne $ctx)
                 {
                     $resultmapping = ""
@@ -108,18 +138,8 @@ function CallRBCreateAADGroup()
 
                     Write-Output "Check Webhook type"
                     Write-Output "----------------------------------------------------------------"
-                    if($WebhookData.WebhookName -eq $global:HCRGWebhook)
-                    {
-                        Write-Output "Webhook type is $global:HCRGWebhook"
-                        Write-Output "----------------------------------------------------------------"
-                        #region Script
-
-                        Write-Output "Convert Webhook body to JSON"
-                        Write-Output "----------------------------------------------------------------"
-                            $RequestBody = $WebhookData.RequestBody | ConvertFrom-Json
-                            $requestdata = $RequestBody.data
-                        Write-Output "----------------------------------------------------------------"
-                        
+                    if($webhook.WebhookName -eq $global:HCRGWebhook)
+                    {                        
                         Write-Output "Get resourcegroup $($requestdata.resourceUri)"
                         Write-Output "----------------------------------------------------------------"
                             $newrg = Get-AzResourceGroup -Id $requestdata.resourceUri
@@ -136,6 +156,7 @@ function CallRBCreateAADGroup()
 
                             foreach($permission in $permissions)
                             {
+                                #section Main RG
                                 try
                                 {
                                     if($null -ne $permission)
@@ -145,18 +166,28 @@ function CallRBCreateAADGroup()
                                         #Execute Function Get-RBAC-Mapping (you can find that Function in the MappingTool module)
                                         $resultmapping = Get-RBAC-Mapping `
                                                                 -MappingTableName $global:ConfPermMappingTable `
-                                                                -MappingTableRG $global:ConfApplRG `
-                                                                -MappingTableStrAcc $global:ConfApplStrAcc `
                                                                 -ConfigTableName $global:ConfConfigurationTable `
-                                                                -ConfigTableRG $global:ConfApplRG `
-                                                                -ConfigTableStrAcc $global:ConfApplStrAcc `
                                                                 -mappingvalue $permission `
                                                                 -RGName $newrg.ResourceGroupName `
-                                                                -RequestType "RG"
+                                                                -RequestType "RG" `
+                                                                -SubscriptionID $requestdata.subscriptionId
                                     
                                         if($resultmapping.ReturnMsg -eq [ReturnCode]::Success)
                                         {
                                             Write-Output $resultmapping.LogMsg
+                                            ################################################################################
+                                            # DebugMsg in Log Analytics
+
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                        -WorkflowID $wfguid `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "Get-RBAC-Mapping" `
+                                                                        -InfoMessage $resultmapping.LogMsg `
+                                                                        -WarnMessage "" `
+                                                                        -ErrorMessage ""
+            
+                                            ################################################################################
+
                                             Write-Output "Return Parameter:"
                                             Write-Output $resultmapping.ReturnJsonParameters02
 
@@ -167,32 +198,55 @@ function CallRBCreateAADGroup()
                                                 #region New AAD Group will be created
 
                                                 Write-Output "Execute Runbook TaskNewAADGroup"                                
-                                                CallRBCreateAADGroup -aadgroupparameters $mappingresult `
-                                                                    -AZRGName $newrg.ResourceGroupName
+                                                $job = CallRBCreateAADGroup -aadgroupparameters $mappingresult `
+                                                                            -AZRGName $newrg.ResourceGroupName
 
                                                 Write-Output "Wait till AADGroup is created"
                                                 do {                                    
                                                     Write-Output "Start Sleep 30 seconds"
                                                     Start-Sleep -Seconds 30 
                                                     
-                                                    if((Get-AzAutomationJob -Id 3461965e-2fb8-48af-8653-fc6206a9a809 `
-                                                                            -ResourceGroupName ACP-Demo-DokaApp `
-                                                                            -AutomationAccountName AppMappingTool-automacc).Status -eq "Failed")
+                                                    if((Get-AzAutomationJob -Id $job.JobId `
+                                                                            -ResourceGroupName $global:ConfApplRG `
+                                                                            -AutomationAccountName $global:ConfAutoAcc).Status -eq "Failed")
                                                     {
-                                                        throw "Script execution failed!"
+                                                        ################################################################################
+                                                        # DebugMsg in Log Analytics
+
+                                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                                    -WorkflowID $wfguid `
+                                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                                    -ScriptSection "CallRBCreateAADGroup" `
+                                                                                    -InfoMessage "" `
+                                                                                    -WarnMessage "" `
+                                                                                    -ErrorMessage "TaskAADGroup execution failed!"
+
+                                                        ################################################################################
+
+                                                        throw "Script execution failed!"                                                        
                                                     }
                                                     
                                                 } while ((Get-Info-from-Config-Table -TableRowKey $mappingresult.AADGroupName `
                                                                                      -TablePartitionKey "RBACPerm" `
-                                                                                     -TableName $global:ConfConfigurationTable `
-                                                                                     -TableResourceGroup $global:ConfApplRG `
-                                                                                     -TableStorageAccount $global:ConfApplStrAcc).ReturnParameter1 -eq "false")
+                                                                                     -TableName $global:ConfConfigurationTable).ReturnParameter1 -eq "false")
                                             
+                                                ################################################################################
+                                                # DebugMsg in Log Analytics
+
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                            -WorkflowID $wfguid `
+                                                                            -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                            -ScriptSection "CallRBCreateAADGroup" `
+                                                                            -InfoMessage "Executen of script TaskAADGroup success" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage ""
+
+                                                ################################################################################
                                                 Write-Output "Created"                                
                                                 Write-Output "Add new ResourceGroup group request into Azure storage queue"
 
                                                 $resultaddmsgtoqueue = Add-Msg-to-Queue -QueueName $global:ConfOnPremMsgQueue `
-                                                                                        -StorageAccountName $global:ConfApplStrAcc `
+                                                                                        -WorkflowID $wfguid `
                                                                                         -RequestType "RG" `
                                                                                         -ADGroupName $mappingresult.ADGroupName `
                                                                                         -ADOUPath $global:ConfOUPathRBACPerm `
@@ -200,9 +254,23 @@ function CallRBCreateAADGroup()
                                                                                         -AADGroupName $mappingresult.AADGroupName `
                                                                                         -AADRoleID $mappingresult.RoleID
 
+                                                #section add msg to queue
                                                 if($resultaddmsgtoqueue.ReturnMsg -eq [ReturnCode]::Success)
-                                                {
+                                                {                                                    
                                                     Write-Output $resultaddmsgtoqueue.ReturnMsg                                    
+
+                                                    ################################################################################
+                                                    # DebugMsg in Log Analytics
+
+                                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                                -WorkflowID $wfguid `
+                                                                                -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                                -ScriptSection "Add-Msg-to-Queue" `
+                                                                                -InfoMessage $resultaddmsgtoqueue.ReturnMsg  `
+                                                                                -WarnMessage "" `
+                                                                                -ErrorMessage ""
+
+                                                    ################################################################################
                                                     Write-Output $resultaddmsgtoqueue.LogMsg
                                                 }
                                                 else {
@@ -213,8 +281,9 @@ function CallRBCreateAADGroup()
                                                     Write-Error "Error Message: $($resultaddmsgtoqueue.LogMsg)"
         
                                                     Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                                -WorkflowID $wfguid `
                                                                                 -ScriptName "TaskAddMSGtoQueue.ps1" `
-                                                                                -ScriptSection "Add-Msg-to-Queue" `
+                                                                                -ScriptSection "add msg to queue/Add-Msg-to-Queue" `
                                                                                 -InfoMessage "" `
                                                                                 -WarnMessage "" `
                                                                                 -ErrorMessage $resultaddmsgtoqueue.LogMsg
@@ -234,20 +303,39 @@ function CallRBCreateAADGroup()
                                                 Write-Output "The permission is already set to the ResourceGroup"
                                             }
                                         }
-                                        else {
+                                        elseif($resultmapping.ReturnMsg -eq [ReturnCode]::Error)
+                                        {
                                             #region Script Error          
             
-                                            Write-Error "Error durring get rbac mapping settings. (go to output for more details)"
-                                            Write-Output "Error durring get rbac mapping settings."
+                                            Write-Error "Error durring execute get rbac mapping settings. (go to output for more details)"
+                                            Write-Output "Error durring execute get rbac mapping settings."
                                             Write-Output "Error message: $($resultmapping.LogMsg)"
                                             Write-Output "----------------------------------------------------------------"
                                             
                                             Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                        -WorkflowID $wfguid `
                                                                         -ScriptName "TaskAddMSGtoQueue.ps1" `
-                                                                        -ScriptSection "Get-RBAC-Mapping" `
+                                                                        -ScriptSection "Get-RBAC-Mapping/get mapping" `
                                                                         -InfoMessage "" `
                                                                         -WarnMessage "" `
                                                                         -ErrorMessage $resultmapping.LogMsg
+                                            #endregion
+                                        }
+                                        elseif ($resultmapping.ReturnMsg -eq [ReturnCode]::Warning) {
+                                            #region Script Error          
+            
+                                            Write-Warning "Warning durring execute get rbac mapping settings. (go to output for more details)"
+                                            Write-Output "Warning durring execute get rbac mapping settings."
+                                            Write-Output "Warning message: $($resultmapping.LogMsg)"
+                                            Write-Output "----------------------------------------------------------------"
+                                            
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Warning) `
+                                                                        -WorkflowID $wfguid `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "Get-RBAC-Mapping/get mapping" `
+                                                                        -InfoMessage "" `
+                                                                        -WarnMessage $resultmapping.LogMsg `
+                                                                        -ErrorMessage ""
                                             #endregion
                                         }
                                     }
@@ -258,8 +346,24 @@ function CallRBCreateAADGroup()
                                     Write-Output "##################################################################################"
                                 }
                                 catch
-                                {
-                                    Write-Error "Error in section CallRBCreateAADGroup. Error message: $($_.Exception.Message)"
+                                {                                    
+                                    #region Script Error          
+                                    
+                                    Write-Error "Error in section Main RG. (go to output for more details)"
+                                    Write-Error "Error in section Main RG."
+                                    Write-Output "Error in section Main RG."
+                                    Write-Output "Error message: $($_.Exception.Message)"
+                                    Write-Output "----------------------------------------------------------------"
+                                    
+                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                -WorkflowID $wfguid `
+                                                                -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                -ScriptSection "Main RG" `
+                                                                -InfoMessage "" `
+                                                                -WarnMessage "" `
+                                                                -ErrorMessage $_.Exception.Message
+                                    #endregion
+                                    Write-Output "----------------------------------------------------------------"
                                 }
                             }
                         }
@@ -267,111 +371,976 @@ function CallRBCreateAADGroup()
                             Write-Output "ResourceGroup have no valid Tag based on configuration (Configuration Tag Name: $($global:ConfRGReqTag))"
                             Write-Output "----------------------------------------------------------------"
                         }
-                        #endregion
-                    } 
-                    elseif ($WebhookData.WebhookName -eq $global:HCAADWebhook)
-                    {      
-                        Write-Output "Webhook type is $global:HCAADWebhook"
+                    }                      
+                    elseif($webhook.WebhookName -eq $global:HCRGDelWebhook)
+                    {
+                        Write-Output "Webhook type is $global:HCRGDelWebhook"
                         Write-Output "----------------------------------------------------------------"
                     
                         #region Script
                         
                         Write-Output "Convert Webhook body to JSON"
                         Write-Output "----------------------------------------------------------------"
-                            $RequestBody = $WebhookData.RequestBody | ConvertFrom-Json
-                            $requestdata = $RequestBody.data.alertContext.SearchResults.tables[0].rows[0]
+                            $RequestBody = $webhook.RequestBody | ConvertFrom-Json
+                            $requestdata = $RequestBody.data
                         Write-Output "----------------------------------------------------------------"
 
-                        $AADGroupName = $requestdata[1]
-                        $AADGroupID = $requestdata[2]
-                        $ADGroupName = $requestdata[1].tostring().tolower().replace($global:NSAADPerm.tolower(),$global:OnPremAADRolePerm)
+                            #$subscriptionid =  $requestdata.subscriptionId                           
+                            $i = $requestdata.resourceUri.split("/")
+                            $resourcegroup = $i[$i.Length -1]
 
-                        Write-Output "New Azure AD group is created."
-                        Write-Output "Get more details."
-                        Write-Output "Type: $($requestdata[0])"
-                        Write-Output "AAD GroupName: $AADGroupName"
-                        Write-Output "AAD GroupID: $AADGroupID"
-                        Write-Output "Initiated by: $($requestdata[3])"  
-                        Write-Output "On-Prem AD GroupName: $ADGroupName"   
-                    
+                            #$requestuser = $requestdata.claims.'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+
+                        Write-Output "Get configuration settings"
+                            $tableconfig = Get-Info-from-Config-Table -TableRowKey "*"`
+                                                                      -TablePartitionKey "RBACPerm" `
+                                                                      -TableName $global:ConfConfigurationTable                            
+                            
+                            $groupresult = $tableconfig.ReturnJsonParameters02 | ConvertFrom-Json                        
                         
-
-                        if($requestdata[0] -eq "Add group")
-                        {
-                            Write-Output "Add Information to configuration Table"
-                            $addinfotableresult = Add-Info-to-Config-Table -AADGroupName  $AADGroupName.ToLower() `
-                                                                           -AADGroupID $AADGroupID.ToLower() `
-                                                                           -ADGroupName $ADGroupName.ToLower()`
-                                                                           -TableName $global:ConfConfigurationTable `
-                                                                           -TableResourceGroup $global:ConfApplRG `
-                                                                           -TableStorageAccount $global:ConfApplStrAcc `
-                                                                           -TablePartitionKey "AADPerm"  
-
-                            if($addinfotableresult.ReturnMsg -eq [ReturnCode]::Success)
+                            foreach($group in ($groupresult | Where-Object {$_.AzureRG -eq $resourcegroup}))
                             {
-                                Write-Output $addinfotableresult.LogMsg
-                                Write-Output $addinfotableresult.ReturnMsg
-                                Write-Output "----------------------------------------------------------------"
+                                Write-Output "Rename Group $($group.AADGroupName)"
 
-                                Write-Output "Add new AAD group request into Azure storage queue"
-                                Write-Output "----------------------------------------------------------------"
+                                $renameresult = Rename-AADGroup -AADGroup $group.AADGroupName `
+                                                                -AADGroupID $group.AADGroupID `
+                                                                -AADTenantID $loginazureresult.ReturnParameter1
 
-                                $resultaddmsgtoqueue = Add-Msg-to-Queue -QueueName $global:ConfOnPremMsgQueue `
-                                                                        -StorageAccountName $global:ConfApplStrAcc `
-                                                                        -RequestType "AAD" `
-                                                                        -ADGroupName $ADGroupName `
-                                                                        -ADOUPath $global:ConfOUPathAADPerm `
-                                                                        -ADGroupDesc "AD Group created by mappingtool" `
-                                                                        -AADGroupName $AADGroupName `
-                                                                        -AADRoleID "none"
-
-                                if($resultaddmsgtoqueue.ReturnMsg -eq [ReturnCode]::Success)
+                                if($renameresult.ReturnMsg -eq [ReturnCode]::Success)
                                 {
-                                    Write-Output $resultaddmsgtoqueue.LogMsg
-                                    Write-Output $resultaddmsgtoqueue.ReturnMsg
+                                    Write-Output $renameresult.LogMsg
+                                    ################################################################################
+                                    # DebugMsg in Log Analytics
+
+                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                -WorkflowID $wfguid `
+                                                                -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                -ScriptSection "Rename-AADGroup" `
+                                                                -InfoMessage $renameresult.LogMsg `
+                                                                -WarnMessage "" `
+                                                                -ErrorMessage ""
+            
+                                    ################################################################################
+
+                                    Write-Output "Get config from configuration table to backup."
+                                    #Backup Config Data
+                                    $backupdata = Get-Info-from-Config-Table -TableRowKey $group.RowKey `
+                                                                             -TablePartitionKey $group.PartitionKey `
+                                                                             -TableName $global:ConfConfigurationTable
+                                    
+                                    if($backupdata.ReturnMsg -eq [ReturnCode]::Success)
+                                    {
+                                        Write-Output $backupdata.LogMsg
+                                        ################################################################################
+                                        # DebugMsg in Log Analytics
+
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                    -WorkflowID $wfguid `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "Get-Info-from-Config-Table" `
+                                                                    -InfoMessage $backupdata.LogMsg `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage ""
+            
+                                        ################################################################################
+
+                                        Write-Output "Backup Configuration data"
+
+                                        $backuprowkey = "Bak-$($group.RowKey)-$((Get-Date).ToFileTime())"
+
+                                        $addbackupdata = Add-Info-to-ConfigBackup-Table -TablePartitionKey "RBACBackup"`
+                                                                                        -TableRowKey $backuprowkey `
+                                                                                        -BackupData $backupdata.ReturnJsonParameters02 `
+                                                                                        -TableName $global:ConfConfigurationTableBackup 
+
+                                        if($addbackupdata.ReturnMsg -eq [ReturnCode]::Success)
+                                        {
+                                            Write-Output $addbackupdata.LogMsg
+                                            ################################################################################
+                                            # DebugMsg in Log Analytics
+
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                        -WorkflowID $wfguid `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "Add-Info-to-ConfigBackup-Table" `
+                                                                        -InfoMessage $backupdata.LogMsg `
+                                                                        -WarnMessage "" `
+                                                                        -ErrorMessage ""
+            
+                                            ################################################################################
+
+                                            Write-Output "Remove configuration from configurationtable"
+
+                                            $removerowitem = Remove-Info-from-Config-Table -TablePartitionKey $group.PartitionKey `
+                                                                                           -TableRowKey $group.RowKey `
+                                                                                           -TableName $global:ConfConfigurationTable
+
+                                            if($removerowitem.ReturnMsg -eq [ReturnCode]::Success)
+                                            {
+                                                Write-Output $removerowitem.LogMsg
+                                                ################################################################################
+                                                # DebugMsg in Log Analytics
+
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                            -WorkflowID $wfguid `
+                                                                            -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                            -ScriptSection "Remove-Info-from-Config-Table" `
+                                                                            -InfoMessage $removerowitem.LogMsg `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage ""
+            
+                                                ################################################################################
+
+                                                Write-Output "Add new message to monitor configuration queue"
+
+                                                $tableconfig = $backupdata.ReturnJsonParameters02 | ConvertFrom-Json
+
+                                                $resultaddmsgtoqueue = Add-Msg-to-Queue -QueueName $global:ConfOnPremMonitorConfig `
+                                                                                        -WorkflowID $wfguid `
+                                                                                        -RequestType "RG-Rem" `
+                                                                                        -ADGroupName $tableconfig.ADGroupName `
+                                                                                        -ADOUPath $tableconfig.ADGroupDN `
+                                                                                        -ADGroupDesc "$((Get-Date).ToShortDateString() + " " + (Get-Date).ToShortTimeString()). Removed Azure RG $resourcegroup" `
+                                                                                        -AADGroupName "none" `
+                                                                                        -AADRoleID "none"
+
+                                                if($resultaddmsgtoqueue.ReturnMsg -eq [ReturnCode]::Success)
+                                                {         
+                                                    ################################################################################
+                                                    # DebugMsg in Log Analytics
+
+                                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                                    -WorkflowID $wfguid `
+                                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                                    -ScriptSection "Add-Msg-to-Queue" `
+                                                                                    -InfoMessage $resultaddmsgtoqueue.LogMsg `
+                                                                                    -WarnMessage "" `
+                                                                                    -ErrorMessage ""
+
+                                                    ################################################################################
+                                                    
+                                                    Write-Output "Finish"
+                                                    Write-Output "----------------------------------------------------------------"
+                                                }
+                                                else {
+                                                    Write-Error "Error in function Add-Msg-to-Queue. (go to output for more details)"
+                                                    Write-Error "Error in function Add-Msg-to-Queue."
+                                                    Write-Error "Error Message: $($resultaddmsgtoqueue.LogMsg)"
+                
+                                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                                -WorkflowID $wfguid `
+                                                                                -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                                -ScriptSection "Add-Msg-to-Queue/Webhook: $($global:HCRGDelWebhook)" `
+                                                                                -InfoMessage "" `
+                                                                                -WarnMessage "" `
+                                                                                -ErrorMessage $resultaddmsgtoqueue.LogMsg
+                
+                                                    #endregion
+
+                                                    Write-Output "----------------------------------------------------------------" 
+                                                }
+                                            }
+                                            else {
+                                                #region Script Error
+    
+                                                Write-Error "Error in function Remove-Info-from-Config-Table. (go to output for more details)"
+                                                Write-Error "Error in function Remove-Info-from-Config-Table."
+                                                Write-Error "Error Message: $($removerowitem.LogMsg)"
+            
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -WorkflowID $wfguid `
+                                                                            -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                            -ScriptSection "Remove-Info-from-Config-Table/Webhook: $($global:HCRGDelWebhook)" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage $removerowitem.LogMsg
+            
+                                                #endregion
+
+                                                Write-Output "----------------------------------------------------------------"
+                                            }                                        
+                                        }
+                                        else {
+                                            #region Script Error
+
+                                            Write-Error "Error in function Add-Info-to-ConfigBackup-Table. (go to output for more details"
+                                            Write-Error "Error in function Add-Info-to-ConfigBackup-Table."
+                                            Write-Error "Error Message: $($addbackupdata.LogMsg)"
+        
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                        -WorkflowID $wfguid `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "Add-Info-to-ConfigBackup-Table/Webhook: $($global:HCRGDelWebhook)" `
+                                                                        -InfoMessage "" `
+                                                                        -WarnMessage "" `
+                                                                        -ErrorMessage $addbackupdata.LogMsg
+        
+                                            #endregion
+
+                                            Write-Output "----------------------------------------------------------------"
+                                        }                                        
+                                    }
+                                    else {
+                                        #region Script Error
+
+                                        Write-Error "Error in function Get-Info-from-Config-Table. (go to output for more details"
+                                        Write-Error "Error in function Get-Info-from-Config-Table."
+                                        Write-Error "Error Message: $($backupdata.LogMsg)"
+    
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                    -WorkflowID $wfguid `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "Get-Info-from-Config-Table/Webhook: $($global:HCRGDelWebhook)" `
+                                                                    -InfoMessage "" `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage $backupdata.LogMsg
+    
+                                        #endregion
+                                        Write-Output "----------------------------------------------------------------"
+                                    }                                                                    
+                                }      
+                                else {
+                                     #region Script Error
+
+                                     Write-Error "Error in function Rename-AADGroup. (go to output for more details"
+                                     Write-Error "Error in function Rename-AADGroup."
+                                     Write-Error "Error Message: $($renameresult.LogMsg)"
+ 
+                                     Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                 -WorkflowID $wfguid `
+                                                                 -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                 -ScriptSection "Rename-AADGroup/Webhook: $($global:HCRGDelWebhook)" `
+                                                                 -InfoMessage "" `
+                                                                 -WarnMessage "" `
+                                                                 -ErrorMessage $renameresult.LogMsg
+ 
+                                     #endregion
+                                     Write-Output "----------------------------------------------------------------"
+                                }                                                                                          
+                            }                        
+                    } 
+                    elseif ($webhook.WebhookName -eq $global:HCAADWebhook)
+                    {      
+                        Write-Output "Webhook type is $global:HCAADWebhook"
+                        Write-Output "----------------------------------------------------------------"                
+                        
+                        Write-Output "Convert Webhook body to JSON"
+                        Write-Output "----------------------------------------------------------------"
+                            $RequestBody = $webhook.RequestBody | ConvertFrom-Json
+                            $requestdata = $RequestBody.data.alertContext.SearchResults.tables[0].rows
+                        Write-Output "----------------------------------------------------------------"
+
+                        foreach ($i in $requestdata)
+                        {
+                            $AADGroupName = $i[1].Replace('"',"").tolower()
+                            $AADGroupID = $i[2].Replace('"',"")
+                            $ADGroupName = $i[1].tostring().tolower().replace($global:NSAADPerm.tolower(),$global:OnPremAADRolePerm).Replace('"',"")
+
+                            Write-Output "New Azure AD group is created."
+                            Write-Output "Get more details."
+                            Write-Output "Type: $($i[0])"
+                            Write-Output "AAD GroupName: $AADGroupName"
+                            Write-Output "AAD GroupID: $AADGroupID"
+                            Write-Output "Initiated by: $($i[3])"  
+                            Write-Output "On-Prem AD GroupName: $ADGroupName"   
+                                                    
+                            if($i[0].tolower() -eq "add group")
+                            {
+                                Write-Output "Add Information to configuration Table"
+                                $addinfotableresult = Add-Info-to-Config-Table -AADGroupName  $AADGroupName.ToLower() `
+                                                                               -AADGroupID $AADGroupID.ToLower() `
+                                                                               -ADGroupName $ADGroupName.ToLower()`
+                                                                               -TableName $global:ConfConfigurationTable `
+                                                                               -TablePartitionKey "AADPerm"  
+
+                                if($addinfotableresult.ReturnMsg -eq [ReturnCode]::Success)
+                                {
+                                    Write-Output $addinfotableresult.LogMsg
+
+                                    ################################################################################
+                                    # DebugMsg in Log Analytics
+
+                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                -WorkflowID $wfguid `
+                                                                -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                -ScriptSection "Add-Info-to-Config-Table" `
+                                                                -InfoMessage $addinfotableresult.LogMsg `
+                                                                -WarnMessage "" `
+                                                                -ErrorMessage ""
+            
+                                    ################################################################################
+
+                                    Write-Output $addinfotableresult.ReturnMsg
                                     Write-Output "----------------------------------------------------------------"
+
+                                    Write-Output "Add new AAD group request into Azure storage queue"
+                                    Write-Output "----------------------------------------------------------------"
+
+                                    $resultaddmsgtoqueue = Add-Msg-to-Queue -QueueName $global:ConfOnPremMsgQueue `
+                                                                            -WorkflowID $wfguid `
+                                                                            -RequestType "AAD" `
+                                                                            -ADGroupName $ADGroupName `
+                                                                            -ADOUPath $global:ConfOUPathAADPerm `
+                                                                            -ADGroupDesc "AD Group created by mappingtool" `
+                                                                            -AADGroupName $AADGroupName `
+                                                                            -AADRoleID "none"
+
+                                    if($resultaddmsgtoqueue.ReturnMsg -eq [ReturnCode]::Success)
+                                    {
+                                        Write-Output $resultaddmsgtoqueue.LogMsg
+
+                                        ################################################################################
+                                        # DebugMsg in Log Analytics
+
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                    -WorkflowID $wfguid `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "Add-Msg-to-Queue" `
+                                                                    -InfoMessage $resultaddmsgtoqueue.LogMsg `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage ""
+
+                                        ################################################################################
+                                        Write-Output $resultaddmsgtoqueue.ReturnMsg
+                                        Write-Output "----------------------------------------------------------------"
+                                    }
+                                    else {
+                                        #region Script Error
+                                    
+                                        Write-Error "Error in function Add-Msg-to-Queue. (go to output for more details"
+                                        Write-Error "Error in function Add-Msg-to-Queue."
+                                        Write-Error "Error Message: $($resultaddmsgtoqueue.LogMsg)"
+                                    
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                    -WorkflowID $wfguid `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "Add-Msg-to-Queue" `
+                                                                    -InfoMessage "" `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage $resultaddmsgtoqueue.LogMsg
+                                    
+                                        #endregion
+                                        Write-Output "----------------------------------------------------------------"
+                                    }                                
+                                }
+                                else {
+                                    
+                                        #region Script Error
+
+                                        Write-Error "Error in function Add-Info-to-Config-Table. (go to output for more details"
+                                        Write-Error "Error in function Add-Msg-to-Queue."
+                                        Write-Error "Error Message: $($addinfotableresult.LogMsg)"
+
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                    -WorkflowID $wfguid `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "Add-Info-to-Config-Table" `
+                                                                    -InfoMessage "" `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage $addinfotableresult.LogMsg
+
+                                        #endregion
+                                    
+                                }
+                            }  
+                            elseif ($i[0].tolower() -eq "delete group") 
+                            {
+                                $AADGroupName = $i[1].Replace('"',"").tolower()
+                                $AADGroupID = $i[2].Replace('"',"")
+
+                                Write-Output "Remove Azure AD group."
+                                Write-Output "Get more details."
+                                Write-Output "Type: $($i[0])"
+                                Write-Output "AAD GroupName: $AADGroupName"
+                                Write-Output "AAD GroupID: $AADGroupID"
+                                Write-Output "Initiated by: $($i[3])"  
+
+                                Write-Output "Get configuration settings"
+                                $tableconfig = Get-Info-from-Config-Table -TableRowKey $AADGroupName `
+                                                                          -TablePartitionKey "AADPerm" `
+                                                                          -TableName $global:ConfConfigurationTable
+
+                                if($tableconfig.ReturnMsg -eq [ReturnCode]::Success)
+                                {
+                                    ################################################################################
+                                    # DebugMsg in Log Analytics
+
+                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                -WorkflowID $wfguid `
+                                                                -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                -ScriptSection "Get-Info-from-Config-Table" `
+                                                                -InfoMessage $tableconfig.LogMsg `
+                                                                -WarnMessage "" `
+                                                                -ErrorMessage ""
+            
+                                    ################################################################################
+
+                                    $aadgroupresult = $tableconfig.ReturnJsonParameters02 | ConvertFrom-Json  
+                                                                        
+                                    Write-Output $tableconfig.ReturnMsg
+
+                                    if($aadgroupresult.AADGroupID -eq $AADGroupID)
+                                    {                                            
+                                        Write-Output "Backup Configuration data"
+
+                                        $backuprowkey = "Bak-$($AADGroupName)-$((Get-Date).ToFileTime())"
+
+                                        $addbackupdata = Add-Info-to-ConfigBackup-Table -TablePartitionKey "AADBackup"`
+                                                                                        -TableRowKey $backuprowkey `
+                                                                                        -BackupData $tableconfig.ReturnJsonParameters02 `
+                                                                                        -TableName $global:ConfConfigurationTableBackup
+
+                                        if($addbackupdata.ReturnMsg -eq [ReturnCode]::Success)
+                                        {                                            
+                                            Write-Output $addbackupdata.LogMsg
+                                            ################################################################################
+                                            # DebugMsg in Log Analytics
+
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                        -WorkflowID $wfguid `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "Add-Info-to-ConfigBackup-Table" `
+                                                                        -InfoMessage $addbackupdata.LogMsg `
+                                                                        -WarnMessage "" `
+                                                                        -ErrorMessage ""
+
+                                            ################################################################################
+                                            Write-Output "Remove configuration from configurationtable"
+
+                                            $removerowitem = Remove-Info-from-Config-Table -TablePartitionKey "AADPerm" `
+                                                                                           -TableRowKey $AADGroupName `
+                                                                                           -TableName $global:ConfConfigurationTable
+
+                                            if($removerowitem.ReturnMsg -eq [ReturnCode]::Success)
+                                            {
+                                                Write-Output $removerowitem.LogMsg
+                                                ################################################################################
+                                                # DebugMsg in Log Analytics
+
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                            -WorkflowID $wfguid `
+                                                                            -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                            -ScriptSection "Remove-Info-from-Config-Table" `
+                                                                            -InfoMessage $removerowitem.LogMsg `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage ""
+
+                                                ################################################################################
+                                                Write-Output "Add new message to monitor configuration queue"
+
+                                                $resultaddmsgtoqueue = Add-Msg-to-Queue -QueueName $global:ConfOnPremMonitorConfig `
+                                                                                        -WorkflowID $wfguid `
+                                                                                        -RequestType "AAD-Rem" `
+                                                                                        -ADGroupName $aadgroupresult.ADGroupName `
+                                                                                        -ADOUPath $aadgroupresult.ADGroupDN `
+                                                                                        -ADGroupDesc "$((Get-Date).ToShortDateString() + " " + (Get-Date).ToShortTimeString()) Removed Azure AD group $AADGroupName." `
+                                                                                        -AADGroupName "none" `
+                                                                                        -AADRoleID "none"
+
+                                                if($resultaddmsgtoqueue.ReturnMsg -eq [ReturnCode]::Success)
+                                                {           
+                                                    ################################################################################
+                                                    # DebugMsg in Log Analytics
+
+                                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                                    -WorkflowID $wfguid `
+                                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                                    -ScriptSection "Add-Msg-to-Queue" `
+                                                                                    -InfoMessage $resultaddmsgtoqueue.LogMsg `
+                                                                                    -WarnMessage "" `
+                                                                                    -ErrorMessage ""
+
+                                                    ################################################################################                                                                                         
+                                                    Write-Output "Finish"
+                                                    Write-Output "----------------------------------------------------------------"
+                                                }
+                                                else {
+                                                            Write-Error "Error in function Add-Msg-to-Queue. (go to output for more details)"
+                                                            Write-Error "Error in function Add-Msg-to-Queue."
+                                                            Write-Error "Error Message: $($resultaddmsgtoqueue.LogMsg)"
+                        
+                                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                                        -WorkflowID $wfguid `
+                                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                                        -ScriptSection "Add-Msg-to-Queue/Webhook: $($global:HCAADDelWebhook)" `
+                                                                                        -InfoMessage "" `
+                                                                                        -WarnMessage "" `
+                                                                                        -ErrorMessage $resultaddmsgtoqueue.LogMsg
+                        
+                                                            #endregion
+
+                                                            Write-Output "----------------------------------------------------------------" 
+                                                }
+                                            }
+                                            else {
+                                                #region Script Error
+            
+                                                Write-Error "Error in function Remove-Info-from-Config-Table. (go to output for more details)"
+                                                Write-Error "Error in function Remove-Info-from-Config-Table."
+                                                Write-Error "Error Message: $($removerowitem.LogMsg)"
+                    
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -WorkflowID $wfguid `
+                                                                            -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                            -ScriptSection "Remove-Info-from-Config-Table/Webhook: $($global:HCRGDelWebhook)" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage $removerowitem.LogMsg
+                    
+                                                #endregion
+
+                                                Write-Output "----------------------------------------------------------------"
+                                            }                                        
+                                        }
+                                        else {
+                                            #region Script Error
+
+                                            Write-Error "Error in function Add-Info-to-ConfigBackup-Table. (go to output for more details"
+                                            Write-Error "Error in function Add-Info-to-ConfigBackup-Table."
+                                            Write-Error "Error Message: $($addbackupdata.LogMsg)"
+                
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                        -WorkflowID $wfguid `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "Add-Info-to-ConfigBackup-Table/Webhook: $($global:HCRGDelWebhook)" `
+                                                                        -InfoMessage "" `
+                                                                        -WarnMessage "" `
+                                                                        -ErrorMessage $addbackupdata.LogMsg
+                
+                                            #endregion
+
+                                            Write-Output "----------------------------------------------------------------"
+                                        }                                                                                    
+                                    }
+                                    else {
+                                        #region Script Error
+
+                                        Write-Error "Error in function Get-Info-from-Config-Table. (go to output for more details"
+                                        Write-Error "Error in function Get-Info-from-Config-Table."
+                                        Write-Error "Log Message: $($tableconfig.LogMsg) and Error 'The AADGroup id isn't the same as the configuration id'"
+
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                    -WorkflowID $wfguid `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "Get-Info-from-Config-Table/Webhook: $($global:HCAADDelWebhook)" `
+                                                                    -InfoMessage "" `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage "Log Message: $($tableconfig.LogMsg) and Error 'The AADGroup id isn't the same as the configuration id'"
+
+                                        #endregion
+                                        Write-Output "----------------------------------------------------------------"
+                                    }
                                 }
                                 else {
                                     #region Script Error
-                                
-                                    Write-Error "Error in function Add-Msg-to-Queue. (go to output for more details"
-                                    Write-Error "Error in function Add-Msg-to-Queue."
-                                    Write-Error "Error Message: $($resultaddmsgtoqueue.LogMsg)"
-                                
+
+                                    Write-Error "Error in function Get-Info-from-Config-Table. (go to output for more details"
+                                    Write-Error "Error in function Get-Info-from-Config-Table."
+                                    Write-Error "Error Message: $($tableconfig.LogMsg)"
+
                                     Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                -WorkflowID $wfguid `
                                                                 -ScriptName "TaskAddMSGtoQueue.ps1" `
-                                                                -ScriptSection "Add-Msg-to-Queue" `
+                                                                -ScriptSection "Webhook: $($global:HCRGDelWebhook)/Get-Info-from-Config-Table" `
                                                                 -InfoMessage "" `
                                                                 -WarnMessage "" `
-                                                                -ErrorMessage $resultaddmsgtoqueue.LogMsg
-                                
+                                                                -ErrorMessage $tableconfig.LogMsg
+
                                     #endregion
                                     Write-Output "----------------------------------------------------------------"
-                                }                                
-                            }
-                            else {
+                                }     
+                            }  
+                            elseif (($i[0].tlower() -eq "add member to group") -or ($i[0].tolower() -eq "Remove member from group"))   
+                            {
+                                $AADGroupName = $i[1].tolower()
+                                $AADGroupID = $i[2].Replace('"',"")
+    
+                                Write-Output "Azure AD group membership changed."
+                                Write-Output "Get more details."
+                                Write-Output "Type: $($i[0])"
+                                Write-Output "AAD GroupName: $AADGroupName"
+                                Write-Output "AAD GroupID: $AADGroupID"
+                                Write-Output "Initiated by: $($i[3])"  
+                                Write-Output "Request Type: $($i[0])"
+                                                            
+                                Write-Output "----------------------------------------------------------------"  
+                                Write-Output "Get Azure configuration row `n"
+                                    $configtable = Get-AzTableTable -TableName $global:ConfConfigurationTable -resourceGroup $global:ConfApplRG `
+                                                                    -storageAccountName $global:ConfApplStrAcc
+    
+                                    [string]$finalFilter = [Microsoft.Azure.Cosmos.Table.TableQuery]::GenerateFilterCondition("AADGroupID",[Microsoft.Azure.Cosmos.Table.QueryComparisons]::Equal,$AADGroupID)
+                                                                                        
+                                    $groupconfig = Get-AzTableRow -table $configtable -ColumnName "AADGroupID" -value $AADGroupID -operator Equal
+    
+                                    Write-Output $groupconfig
+    
                                 
+                                    if($null -ne $groupconfig)
+                                    {
+                                        #if($global:ConfAADPermissionWriteback) #Future request!!
+                                        #{
+                                            Write-Output "Update ADGroupuSNChanged to 0"
+                                            $groupconfig.ADGroupuSNChanged = "0"                                                
+                                                        
+                                            $rupdrow = $groupconfig | Update-AzTableRow -Table $configtable
+    
+    
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Success) `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "$($global:HCAADCHWebhook)/Get-AzTableRow" `
+                                                                        -InfoMessage "Update ADGroupuSNChanged for group $AADGroupName to 0." `
+                                                                        -WarnMessage "" `
+                                                                        -ErrorMessage "" `
+                                                                        -AdditionalInfo "Azure AD Group change action executed ($($i[0]))" `
+                                                                        -InitiatedBy $($i[3])
+                                        #}
+                                                                
+                                    }
+                                    else {
+                                        #region Script Error
+    
+                                        Write-Error "Error to find the configuration row based on filter. (go to output for more details)"
+                                        Write-Output "Error to find the configuration row based on filter."   
+                                        Write-Output "Filter: $finalFilter"                                                                
+                                        Write-Output "----------------------------------------------------------------"
+    
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "$($global:HCAADCHWebhook)/Get-AzTableRow" `
+                                                                    -InfoMessage "" `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage "Error to find the configuration row based on filter." `
+                                                                    -AdditionalInfo "Search Filter: $($finalFilter)."
+    
+    
+                                        #endregion
+                                    }             
+                            }                        
+                        }
+                    }
+                    else {
+                        #region Script Error
+            
+                            Write-Error "Error storage context is null. Script ended."
+                            Write-Output "Error storage context is null. Script ended."                    
+                            Write-Output "----------------------------------------------------------------"
+            
+                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                        -WorkflowID $wfguid `
+                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                        -ScriptSection "storage context/Create storage context" `
+                                                        -InfoMessage "" `
+                                                        -WarnMessage "" `
+                                                        -ErrorMessage "Error storage context is null. Script ended."
+            
+                        #endregion
+                        Write-Output "----------------------------------------------------------------"
+                    } 
+                    
+                    #Old Code
+                    <#
+                    
+                    elseif($webhook.WebhookName -eq $global:HCAADDelWebhook)
+                    {
+                        Write-Output "Webhook type is $global:HCAADDelWebhook"
+                        Write-Output "----------------------------------------------------------------"                
+                        
+                        Write-Output "Convert Webhook body to JSON"
+                        Write-Output "----------------------------------------------------------------"
+                            $RequestBody = $webhook.RequestBody | ConvertFrom-Json
+                            $requestdata = $RequestBody.data.alertContext.SearchResults.tables[0].rows
+                        Write-Output "----------------------------------------------------------------"
+
+                        foreach ($i in $requestdata)
+                        {
+                            $AADGroupName = $i[1].Replace('"',"").tolower()
+                            $AADGroupID = $i[2].Replace('"',"")
+
+                            Write-Output "Remove Azure AD group."
+                            Write-Output "Get more details."
+                            Write-Output "Type: $($i[0])"
+                            Write-Output "AAD GroupName: $AADGroupName"
+                            Write-Output "AAD GroupID: $AADGroupID"
+                            Write-Output "Initiated by: $($i[3])"  
+
+                            Write-Output "Get configuration settings"
+                                $tableconfig = Get-Info-from-Config-Table -TableRowKey $AADGroupName `
+                                                                          -TablePartitionKey "AADPerm" `
+                                                                          -TableName $global:ConfConfigurationTable
+
+                                if($tableconfig.ReturnMsg -eq [ReturnCode]::Success)
+                                {
+                                    ################################################################################
+                                    # DebugMsg in Log Analytics
+
+                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                -WorkflowID $wfguid `
+                                                                -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                -ScriptSection "Get-Info-from-Config-Table" `
+                                                                -InfoMessage $tableconfig.LogMsg `
+                                                                -WarnMessage "" `
+                                                                -ErrorMessage ""
+            
+                                    ################################################################################
+
+                                    $aadgroupresult = $tableconfig.ReturnJsonParameters02 | ConvertFrom-Json  
+                                                                        
+                                    Write-Output $tableconfig.ReturnMsg
+
+                                    if($aadgroupresult.AADGroupID -eq $AADGroupID)
+                                    {                                            
+                                        Write-Output "Backup Configuration data"
+
+                                        $backuprowkey = "Bak-$($AADGroupName)-$((Get-Date).ToFileTime())"
+
+                                        $addbackupdata = Add-Info-to-ConfigBackup-Table -TablePartitionKey "AADBackup"`
+                                                                                        -TableRowKey $backuprowkey `
+                                                                                        -BackupData $tableconfig.ReturnJsonParameters02 `
+                                                                                        -TableName $global:ConfConfigurationTableBackup
+
+                                        if($addbackupdata.ReturnMsg -eq [ReturnCode]::Success)
+                                        {                                            
+                                            Write-Output $addbackupdata.LogMsg
+                                            ################################################################################
+                                            # DebugMsg in Log Analytics
+
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                        -WorkflowID $wfguid `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "Add-Info-to-ConfigBackup-Table" `
+                                                                        -InfoMessage $addbackupdata.LogMsg `
+                                                                        -WarnMessage "" `
+                                                                        -ErrorMessage ""
+
+                                            ################################################################################
+                                            Write-Output "Remove configuration from configurationtable"
+
+                                            $removerowitem = Remove-Info-from-Config-Table -TablePartitionKey "AADPerm" `
+                                                                                           -TableRowKey $AADGroupName `
+                                                                                           -TableName $global:ConfConfigurationTable
+
+                                            if($removerowitem.ReturnMsg -eq [ReturnCode]::Success)
+                                            {
+                                                Write-Output $removerowitem.LogMsg
+                                                ################################################################################
+                                                # DebugMsg in Log Analytics
+
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                            -WorkflowID $wfguid `
+                                                                            -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                            -ScriptSection "Remove-Info-from-Config-Table" `
+                                                                            -InfoMessage $removerowitem.LogMsg `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage ""
+
+                                                ################################################################################
+                                                Write-Output "Add new message to monitor configuration queue"
+
+                                                $resultaddmsgtoqueue = Add-Msg-to-Queue -QueueName $global:ConfOnPremMonitorConfig `
+                                                                                        -WorkflowID $wfguid `
+                                                                                        -RequestType "AAD-Rem" `
+                                                                                        -ADGroupName $aadgroupresult.ADGroupName `
+                                                                                        -ADOUPath $aadgroupresult.ADGroupDN `
+                                                                                        -ADGroupDesc "$((Get-Date).ToShortDateString() + " " + (Get-Date).ToShortTimeString()) Removed Azure AD group $AADGroupName." `
+                                                                                        -AADGroupName "none" `
+                                                                                        -AADRoleID "none"
+
+                                                if($resultaddmsgtoqueue.ReturnMsg -eq [ReturnCode]::Success)
+                                                {           
+                                                    ################################################################################
+                                                    # DebugMsg in Log Analytics
+
+                                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Debug) `
+                                                                                    -WorkflowID $wfguid `
+                                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                                    -ScriptSection "Add-Msg-to-Queue" `
+                                                                                    -InfoMessage $resultaddmsgtoqueue.LogMsg `
+                                                                                    -WarnMessage "" `
+                                                                                    -ErrorMessage ""
+
+                                                    ################################################################################                                                                                         
+                                                    Write-Output "Finish"
+                                                    Write-Output "----------------------------------------------------------------"
+                                                }
+                                                else {
+                                                            Write-Error "Error in function Add-Msg-to-Queue. (go to output for more details)"
+                                                            Write-Error "Error in function Add-Msg-to-Queue."
+                                                            Write-Error "Error Message: $($resultaddmsgtoqueue.LogMsg)"
+                        
+                                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                                        -WorkflowID $wfguid `
+                                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                                        -ScriptSection "Add-Msg-to-Queue/Webhook: $($global:HCAADDelWebhook)" `
+                                                                                        -InfoMessage "" `
+                                                                                        -WarnMessage "" `
+                                                                                        -ErrorMessage $resultaddmsgtoqueue.LogMsg
+                        
+                                                            #endregion
+
+                                                            Write-Output "----------------------------------------------------------------" 
+                                                }
+                                            }
+                                            else {
+                                                #region Script Error
+            
+                                                Write-Error "Error in function Remove-Info-from-Config-Table. (go to output for more details)"
+                                                Write-Error "Error in function Remove-Info-from-Config-Table."
+                                                Write-Error "Error Message: $($removerowitem.LogMsg)"
+                    
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -WorkflowID $wfguid `
+                                                                            -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                            -ScriptSection "Remove-Info-from-Config-Table/Webhook: $($global:HCRGDelWebhook)" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage $removerowitem.LogMsg
+                    
+                                                #endregion
+
+                                                Write-Output "----------------------------------------------------------------"
+                                            }                                        
+                                        }
+                                        else {
+                                            #region Script Error
+
+                                            Write-Error "Error in function Add-Info-to-ConfigBackup-Table. (go to output for more details"
+                                            Write-Error "Error in function Add-Info-to-ConfigBackup-Table."
+                                            Write-Error "Error Message: $($addbackupdata.LogMsg)"
+                
+                                            Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                        -WorkflowID $wfguid `
+                                                                        -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                        -ScriptSection "Add-Info-to-ConfigBackup-Table/Webhook: $($global:HCRGDelWebhook)" `
+                                                                        -InfoMessage "" `
+                                                                        -WarnMessage "" `
+                                                                        -ErrorMessage $addbackupdata.LogMsg
+                
+                                            #endregion
+
+                                            Write-Output "----------------------------------------------------------------"
+                                        }                                                                                    
+                                    }
+                                    else {
+                                        #region Script Error
+
+                                        Write-Error "Error in function Get-Info-from-Config-Table. (go to output for more details"
+                                        Write-Error "Error in function Get-Info-from-Config-Table."
+                                        Write-Error "Log Message: $($tableconfig.LogMsg) and Error 'The AADGroup id isn't the same as the configuration id'"
+
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                    -WorkflowID $wfguid `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "Get-Info-from-Config-Table/Webhook: $($global:HCAADDelWebhook)" `
+                                                                    -InfoMessage "" `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage "Log Message: $($tableconfig.LogMsg) and Error 'The AADGroup id isn't the same as the configuration id'"
+
+                                        #endregion
+                                        Write-Output "----------------------------------------------------------------"
+                                    }
+                                }
+                                else {
                                     #region Script Error
 
-                                    Write-Error "Error in function Add-Info-to-Config-Table. (go to output for more details"
-                                    Write-Error "Error in function Add-Msg-to-Queue."
-                                    Write-Error "Error Message: $($addinfotableresult.LogMsg)"
+                                    Write-Error "Error in function Get-Info-from-Config-Table. (go to output for more details"
+                                    Write-Error "Error in function Get-Info-from-Config-Table."
+                                    Write-Error "Error Message: $($tableconfig.LogMsg)"
+
+                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                -WorkflowID $wfguid `
+                                                                -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                -ScriptSection "Webhook: $($global:HCRGDelWebhook)/Get-Info-from-Config-Table" `
+                                                                -InfoMessage "" `
+                                                                -WarnMessage "" `
+                                                                -ErrorMessage $tableconfig.LogMsg
+
+                                    #endregion
+                                    Write-Output "----------------------------------------------------------------"
+                                } 
+                        }
+                    } 
+                    elseif($webhook.WebhookName -eq $global:HCAADCHWebhook)
+                    {
+                        Write-Output "Webhook type is $global:HCAADCHWebhook"
+                        Write-Output "----------------------------------------------------------------"
+                    
+                        #region Script
+                        
+                        Write-Output "Convert Webhook body to JSON"
+                        Write-Output "----------------------------------------------------------------"
+                            $RequestBody = $webhook.RequestBody | ConvertFrom-Json
+                            $requestdata = $RequestBody.data.alertContext.SearchResults.tables[0].rows
+                        Write-Output "----------------------------------------------------------------"
+
+                        foreach ($i in $requestdata)
+                        {
+                            $AADGroupName = $i[1].tolower()
+                            $AADGroupID = $i[2].Replace('"',"")
+
+                            Write-Output "Azure AD group membership changed."
+                            Write-Output "Get more details."
+                            Write-Output "Type: $($i[0])"
+                            Write-Output "AAD GroupName: $AADGroupName"
+                            Write-Output "AAD GroupID: $AADGroupID"
+                            Write-Output "Initiated by: $($i[3])"  
+                            Write-Output "Request Type: $($i[0])"
+                                                        
+                            Write-Output "----------------------------------------------------------------"  
+                            Write-Output "Get Azure configuration row `n"
+                                $configtable = Get-AzTableTable -TableName $global:ConfConfigurationTable -resourceGroup $global:ConfApplRG `
+                                                                -storageAccountName $global:ConfApplStrAcc
+
+                                [string]$finalFilter = [Microsoft.Azure.Cosmos.Table.TableQuery]::GenerateFilterCondition("AADGroupID",[Microsoft.Azure.Cosmos.Table.QueryComparisons]::Equal,$AADGroupID)
+                                                                                    
+                                $groupconfig = Get-AzTableRow -table $configtable -ColumnName "AADGroupID" -value $AADGroupID -operator Equal
+
+                                Write-Output $groupconfig
+
+                            
+                                if($null -ne $groupconfig)
+                                {
+                                    #if($global:ConfAADPermissionWriteback) #Future request!!
+                                    #{
+                                        Write-Output "Update ADGroupuSNChanged to 0"
+                                        $groupconfig.ADGroupuSNChanged = "0"                                                
+                                                    
+                                        $rupdrow = $groupconfig | Update-AzTableRow -Table $configtable
+
+
+                                        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Success) `
+                                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                                    -ScriptSection "$($global:HCAADCHWebhook)/Get-AzTableRow" `
+                                                                    -InfoMessage "Update ADGroupuSNChanged for group $AADGroupName to 0." `
+                                                                    -WarnMessage "" `
+                                                                    -ErrorMessage "" `
+                                                                    -AdditionalInfo "Azure AD Group change action executed ($($i[0]))" `
+                                                                    -InitiatedBy $($i[3])
+                                    #}
+                                                            
+                                }
+                                else {
+                                    #region Script Error
+
+                                    Write-Error "Error to find the configuration row based on filter. (go to output for more details)"
+                                    Write-Output "Error to find the configuration row based on filter."   
+                                    Write-Output "Filter: $finalFilter"                                                                
+                                    Write-Output "----------------------------------------------------------------"
 
                                     Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
                                                                 -ScriptName "TaskAddMSGtoQueue.ps1" `
-                                                                -ScriptSection "Add-Info-to-Config-Table" `
+                                                                -ScriptSection "$($global:HCAADCHWebhook)/Get-AzTableRow" `
                                                                 -InfoMessage "" `
                                                                 -WarnMessage "" `
-                                                                -ErrorMessage $addinfotableresult.LogMsg
+                                                                -ErrorMessage "Error to find the configuration row based on filter." `
+                                                                -AdditionalInfo "Search Filter: $($finalFilter)."
+
 
                                     #endregion
-                                
-                            }
-                        }       
-                    
-                        #endregion
-                    }   
-                } 
+                                }                                  
+                        }
+                    } 
+                    #>
+                }   
                 else {
                     #region Script Error
         
@@ -380,14 +1349,15 @@ function CallRBCreateAADGroup()
                         Write-Output "----------------------------------------------------------------"
         
                         Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
-                                            -ScriptName "TaskAddMSGtoQueue.ps1" `
-                                            -ScriptSection "Create storage context" `
-                                            -InfoMessage "" `
-                                            -WarnMessage "" `
-                                            -ErrorMessage "Error storage context is null. Script ended."
+                                                    -WorkflowID $wfguid `
+                                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                                    -ScriptSection "Create storage context" `
+                                                    -InfoMessage "" `
+                                                    -WarnMessage "" `
+                                                    -ErrorMessage "Error storage context is null. Script ended."
         
                     #endregion
-                }                    
+                }                                                
         }
         else {            
 
@@ -399,21 +1369,36 @@ function CallRBCreateAADGroup()
             Write-Output "----------------------------------------------------------------"
             
             Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                        -WorkflowID $wfguid `
                                         -ScriptName "TaskAddMSGtoQueue.ps1" `
-                                        -ScriptSection "Connect to Azure" `
+                                        -ScriptSection "Main/Connect to Azure" `
                                         -InfoMessage "" `
                                         -WarnMessage "" `
                                         -ErrorMessage $loginazureresult.LogMsg
             #endregion
+            Write-Output "----------------------------------------------------------------"
         }
+
+        ############################################
+        # Script finish
+        ############################################
+
+        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Success) `
+                                    -WorkflowID $wfguid `
+                                    -ScriptName "TaskAddMSGtoQueue.ps1" `
+                                    -ScriptSection "Script End" `
+                                    -InfoMessage "Script run successful at $(Get-Date)" `
+                                    -WarnMessage "" `
+                                    -ErrorMessage ""
     }
     catch {
         Write-Error "Error in Main script section section. Error message: $($_.Exception.Message)"
         Write-Output "Error in Main script section section. Error message: $($_.Exception.Message)"
     
-        Write-State-to-LogAnalytics -MessageType [ReturnCode]::Error `
+        Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                    -WorkflowID $wfguid `
                                     -ScriptName "TaskAddMSGtoQueue.ps1" `
-                                    -ScriptSection "Main" `
+                                    -ScriptSection "Main Script" `
                                     -InfoMessage "" `
                                     -WarnMessage "" `
                                     -ErrorMessage $_.Exception.Message
