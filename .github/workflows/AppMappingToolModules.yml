@@ -32,13 +32,13 @@ jobs:
           echo test, and deploy your project.
        
       - name: Azure Blob Upload
-        uses: LanceMcCarthy/Action-AzureBlobUpload@v1.3
+        uses: LanceMcCarthy/Action-AzureBlobUpload@v1.7
         with:
           # Azure Storage ConnectionString for the container (Azure Portal - select Storage Account - Access Keys blade).
           connection_string: ${{ secrets.MAPPINGTOOLSTRCONNECTIONSTRING }}
           # Blob Container name (e.g. my-container).
           container_name: testcontainer
           # The local folder containing all the files and subfolders to upload to the blob container (use a trailing slash)
-          source_folder: src\BuildOutput\
+          source_folder: AzureSolutions\Mappingtool\PSModules\Custom\Deploy\
           # This option will delete all the blobs in destination_folder before uploading the new files
           clean_destination_folder: true
