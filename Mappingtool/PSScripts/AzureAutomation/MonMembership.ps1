@@ -198,7 +198,7 @@ try
                                                                                     -TableRowKey $config.RowKey `
                                                                                     -TablePartitionKey $config.PartitionKey `
                                                                                     -RowKeytoChange "Validatet" `
-                                                                                    -RowValuetoChange "false"
+                                                                                    -RowValuetoChange "false"                                                                                    
 
                                         if(($updateresultValidated.ReturnCode -ne [ReturnCode]::Success.Value__))
                                         {
@@ -221,7 +221,33 @@ try
 
                                                 #endregion
                                         }  
+
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfConfigurationTable `
+                                                                                         -TableRowKey $config.RowKey `
+                                                                                         -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueMsg "Waring The Azure Active Directory Group $($config.AADGroupName) doesn't exist! Please review the configuration settings or delete the configuration item!"
                                         
+                                        if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
+                                        {
+                                            #region Script Error
+                                                 
+                                                Write-Error "Error add issue to table. (go to output for more details)"
+                                                Write-Output "Error add issue to table."   
+                                                Write-Output "Return Message for ADDIssuetoTable $($addissuetotable.LogMsg)"                                                                                                                           
+                                                Write-Output "----------------------------------------------------------------"
+                                                 
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -ScriptName "MonMembership.ps1" `
+                                                                            -ScriptSection "Add-Info-to-ConfigIssue-Table/AD Group not found" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage "Error update the configuration row." `
+                                                                            -AdditionalInfo "Return Message for Validated  update: $($addissuetotable.LogMsg)"   
+                                                 
+                                                 
+                                            #endregion
+                                        }
+
                                         Write-Output "----------------------------------------------------------------"
 
                                         #region script warning
@@ -244,13 +270,39 @@ try
                                     #region script warning
 
                                         Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Warning) `
-                                        -ScriptName "MonMembership.ps1" `
-                                        -ScriptSection "check location/Check group location" `
-                                        -InfoMessage "" `
-                                        -WarnMessage "Waring The Active Directory Group $($config.ADGroupName) was moved from the initial location. Initial Location: $($config.ADGroupDN), new location: $($adgroupresult.DistinguishedName)" `
-                                        -ErrorMessage ""
+                                                                    -ScriptName "MonMembership.ps1" `
+                                                                    -ScriptSection "check location/Check group location" `
+                                                                    -InfoMessage "" `
+                                                                    -WarnMessage "Waring The Active Directory Group $($config.ADGroupName) was moved from the initial location. Initial Location: $($config.ADGroupDN), new location: $($adgroupresult.DistinguishedName)" `
+                                                                    -ErrorMessage ""
 
                                     #endregion
+
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfConfigurationTable `
+                                                                                         -TableRowKey $config.RowKey `
+                                                                                         -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueMsg "Waring The Active Directory Group $($config.ADGroupName) was moved from the initial location. Initial Location: $($config.ADGroupDN), new location: $($adgroupresult.DistinguishedName)"
+                                        
+                                        if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
+                                        {
+                                            #region Script Error
+                                                 
+                                                Write-Error "Error add issue to table. (go to output for more details)"
+                                                Write-Output "Error add issue to table."   
+                                                Write-Output "Return Message for ADDIssuetoTable $($addissuetotable.LogMsg)"                                                                                                                           
+                                                Write-Output "----------------------------------------------------------------"
+                                                 
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -ScriptName "MonMembership.ps1" `
+                                                                            -ScriptSection "Add-Info-to-ConfigIssue-Table/AD Group not found" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage "Error update the configuration row." `
+                                                                            -AdditionalInfo "Return Message for Validated  update: $($addissuetotable.LogMsg)"   
+                                                 
+                                                 
+                                            #endregion
+                                        }
                                 }
                             }
                             else {
@@ -268,6 +320,32 @@ try
                                                                 -ErrorMessage ""
 
                                 #endregion
+
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfConfigurationTable `
+                                                                                         -TableRowKey $config.RowKey `
+                                                                                         -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueMsg "Waring The Active Directory Group $($config.ADGroupName) doesn't exist! Please review the configuration settings or delete the configuration!"
+                                        
+                                        if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
+                                        {
+                                            #region Script Error
+                                                 
+                                                Write-Error "Error add issue to table. (go to output for more details)"
+                                                Write-Output "Error add issue to table."   
+                                                Write-Output "Return Message for ADDIssuetoTable $($addissuetotable.LogMsg)"                                                                                                                           
+                                                Write-Output "----------------------------------------------------------------"
+                                                 
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -ScriptName "MonMembership.ps1" `
+                                                                            -ScriptSection "Add-Info-to-ConfigIssue-Table/AD Group not found" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage "Error update the configuration row." `
+                                                                            -AdditionalInfo "Return Message for Validated  update: $($addissuetotable.LogMsg)"   
+                                                 
+                                                 
+                                            #endregion
+                                        }
 
                             }                                                    
                         }

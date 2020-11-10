@@ -108,7 +108,8 @@ function Get-Variable-Assets-UnEnc
         #Application tables
         $global:ConfConfigurationTable = Get-AutomationVariable -Name "Conf-App-Configuration-Table"                    
         $global:ConfConfigurationTableBackup = Get-AutomationVariable -Name "Conf-App-Configuration-TableBak"                    
-        $global:ConfPermMappingTable = Get-AutomationVariable -Name "Conf-App-Mapping-Table"        
+        $global:ConfPermMappingTable = Get-AutomationVariable -Name "Conf-App-Mapping-Table" 
+        $global:ConfPermIssueTable = Get-AutomationVariable -Name "Conf-App-Config-Issues"       
         
         #Application queues        
         $global:ConfCloudMsgQueue = Get-AutomationVariable -Name "Conf-App-CL-Process-Msg-Queue"
@@ -1036,6 +1037,61 @@ function Add-Info-to-ConfigBackup-Table()
                                                  -partitionKey $TablePartitionKey `
                                                  -rowKey $TableRowKey `
                                                  -property @{"BackupData"=$BackupData}
+
+        $returnmsg.ReturnJsonParameters02 = $resultaddtableinfo
+        $returnmsg.ReturnCode = [ReturnCode]::Success.Value__
+        $returnmsg.ReturnMsg = [ReturnCode]::Success
+    }
+    catch
+    {
+        $returnmsg.LogMsg = $returnmsg.LogMsg + "Error in section Add-Info-to-ConfigBackup-Table. Error message: $($_.Exception.Message) `n"
+        $returnmsg.ReturnCode = [ReturnCode]::Error.Value__
+        $returnmsg.ReturnMsg = [ReturnCode]::Error
+    }
+
+    return $returnmsg
+}
+
+function Add-Info-to-ConfigIssue-Table()
+{
+    param (
+        [parameter (Mandatory=$true)]
+        [string] $TablePartitionKey,
+        [parameter (Mandatory=$true)]
+        [string] $TableRowKey,
+        [parameter (Mandatory=$true)]
+        [string] $IssueMsg,
+        [parameter (Mandatory=$true)]
+        [string] $TableName      
+    )
+
+    $returnmsg = [ReturnMsg]::new()
+
+    try
+    {
+        $returnmsg.LogMsg = "Get Azure Table $TableName in RG $($global:ConfApplRG) at Storage Account $($global:ConfApplStrAcc) `n"
+            $table = Get-AzTableTable -TableName $TableName -resourceGroup $($global:ConfApplRG) `
+                                      -storageAccountName $($global:ConfApplStrAcc)
+
+        $returnmsg.LogMsg = "Check if entry always exist `n"
+        $keyresult = Get-AzTableRow -Table $table -PartitionKey $TablePartitionKey -RowKey $TableRowKey
+
+        if($null -ne $keyresult)
+        {
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Update issue in table `n"
+            $keyresult.IssueMsg = $IssueMsg
+
+            $updateresult = $keyresult | Update-AzTableRow -table $table
+
+        }
+        else {
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Add new issue to table `n"
+            $resultaddtableinfo = Add-AzTableRow -table $table `
+                                                 -partitionKey $TablePartitionKey `
+                                                 -rowKey $TableRowKey `
+                                                 -property @{"IssueMsg"=$IssueMsg}
+            
+        }
 
         $returnmsg.ReturnJsonParameters02 = $resultaddtableinfo
         $returnmsg.ReturnCode = [ReturnCode]::Success.Value__
