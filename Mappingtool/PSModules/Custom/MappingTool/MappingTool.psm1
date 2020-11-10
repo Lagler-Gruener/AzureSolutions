@@ -1060,6 +1060,9 @@ function Add-Info-to-ConfigIssue-Table()
         [parameter (Mandatory=$true)]
         [string] $TableRowKey,
         [parameter (Mandatory=$true)]
+        [ValidateSet('AD-Del','AD-Mv','AAD-Del')]
+        [string] $IssueType,
+        [parameter (Mandatory=$true)]
         [string] $IssueMsg,
         [parameter (Mandatory=$true)]
         [string] $TableName      
