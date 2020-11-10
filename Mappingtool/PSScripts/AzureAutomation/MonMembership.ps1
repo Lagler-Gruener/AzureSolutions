@@ -132,6 +132,16 @@ try
                                                     $addmember = $members.Add($member)
                                                     Write-Output "Add member $($member.UserPrincipalName) to the array."                                            
                                                 }
+                                                else {
+                                                    Write-Warning "Waring the user $($memberdetails.Name) with SID $($memberdetails.SID.value), haven't an UPN defined!"
+
+                                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Warning) `
+                                                                                -ScriptName "MonMembership.ps1" `
+                                                                                -ScriptSection "add msg to queue/Get-ADUser" `
+                                                                                -InfoMessage "" `
+                                                                                -WarnMessage "Waring the user $($memberdetails.Name) with SID $($memberdetails.SID.value), haven't an UPN defined!" `
+                                                                                -ErrorMessage ""
+                                                }
                                             }         
     
                                             $jsonmsg = @{"ADGroupName" = $config.ADGroupName
