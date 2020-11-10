@@ -36,7 +36,9 @@ using module MappingTool
 [CmdletBinding()]
 param (
     [parameter (Mandatory=$true)]
-    [object] $ConfigTableData
+    [object] $ConfigTableData,
+    [ValidateSet('true','false')]
+    $DebugScript
 )
 
 #######################################################################################################################
@@ -55,6 +57,14 @@ Get-Variable-Assets-UnEnc
 
 try 
 {
+    if($DebugScript -eq "true")
+    {
+        $MonMem = $ConfigTableData | ConvertFrom-Json
+    }
+    else {
+        $MonMem = $ConfigTableData
+    } 
+
     Write-Output "Connect to Azure"
         $loginazureresult = Login-Azure
     Write-Output "----------------------------------------------------------------"
@@ -72,7 +82,7 @@ try
                 #Section storage context
                 if($null -ne $ctx)
                 {                  
-                    foreach ($config in $ConfigTableData)
+                    foreach ($config in $MonMem)
                     {
                         Write-Output "Check configuration setting:"
                         Write-Output "AADGroupName: $($config.AADGroupName)"
@@ -222,15 +232,10 @@ try
                                                 #endregion
                                         }  
 
-                                        Write-Output $global:ConfPermIssueTable
-                                        Write-Output $config.RowKey
-                                        Write-Output $config.PartitionKey
-
-                                        $grpname = $config.AADGroupName                                        
                                         $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
                                                                                          -TableRowKey $config.RowKey `
                                                                                          -TablePartitionKey $config.PartitionKey `
-                                                                                         -IssueMsg "Waring The Azure Active Directory Group $($grpname) doesn't exist! Please review the configuration settings or delete the configuration!"
+                                                                                         -IssueMsg "Waring The Azure Active Directory Group $($config.AADGroupName) doesn't exist! Please review the configuration settings or delete the configuration!"
                                         
                                         if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
                                         {
