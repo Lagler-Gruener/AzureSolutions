@@ -222,7 +222,7 @@ try
                                                 #endregion
                                         }  
 
-                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfConfigurationTable `
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
                                                                                          -TableRowKey $config.RowKey `
                                                                                          -TablePartitionKey $config.PartitionKey `
                                                                                          -IssueMsg "Waring The Azure Active Directory Group $($config.AADGroupName) doesn't exist! Please review the configuration settings or delete the configuration item!"
@@ -278,7 +278,7 @@ try
 
                                     #endregion
 
-                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfConfigurationTable `
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
                                                                                          -TableRowKey $config.RowKey `
                                                                                          -TablePartitionKey $config.PartitionKey `
                                                                                          -IssueMsg "Waring The Active Directory Group $($config.ADGroupName) was moved from the initial location. Initial Location: $($config.ADGroupDN), new location: $($adgroupresult.DistinguishedName)"
@@ -321,7 +321,7 @@ try
 
                                 #endregion
 
-                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfConfigurationTable `
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
                                                                                          -TableRowKey $config.RowKey `
                                                                                          -TablePartitionKey $config.PartitionKey `
                                                                                          -IssueMsg "Waring The Active Directory Group $($config.ADGroupName) doesn't exist! Please review the configuration settings or delete the configuration!"
