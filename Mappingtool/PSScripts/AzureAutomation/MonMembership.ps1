@@ -120,14 +120,18 @@ try
                                             foreach($member in $adgroupresult.Members)
                                             {
                                                 $memberdetails = Get-ADUser -Identity $member
-                                                $member = @{"Name"=$memberdetails.Name;
-                                                            "UserPrincipalName"=$memberdetails.UserPrincipalName;
-                                                            "Surname"=$memberdetails.Surname;
-                                                            "GivenName"=$memberdetails.GivenName;
-                                                            "SID"=$memberdetails.SID.value}     
+
+                                                if(!($null -eq $memberdetails.UserPrincipalName))
+                                                {
+                                                    $member = @{"Name"=$memberdetails.Name;
+                                                                "UserPrincipalName"=$memberdetails.UserPrincipalName;
+                                                                "Surname"=$memberdetails.Surname;
+                                                                "GivenName"=$memberdetails.GivenName;
+                                                                "SID"=$memberdetails.SID.value}     
                                                 
-                                                $addmember = $members.Add($member)
-                                                Write-Output "Add member $($member.UserPrincipalName) to the array."                                            
+                                                    $addmember = $members.Add($member)
+                                                    Write-Output "Add member $($member.UserPrincipalName) to the array."                                            
+                                                }
                                             }         
     
                                             $jsonmsg = @{"ADGroupName" = $config.ADGroupName
