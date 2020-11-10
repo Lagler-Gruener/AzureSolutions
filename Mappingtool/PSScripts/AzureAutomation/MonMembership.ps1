@@ -222,11 +222,15 @@ try
                                                 #endregion
                                         }  
 
-                                        $grpname = $config.AADGroupName
+                                        Write-Output $global:ConfPermIssueTable
+                                        Write-Output $config.RowKey
+                                        Write-Output $config.PartitionKey
+                                        
+                                        $grpname = $config.AADGroupName                                        
                                         $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
                                                                                          -TableRowKey $config.RowKey `
                                                                                          -TablePartitionKey $config.PartitionKey `
-                                                                                         -IssueMsg "Test"
+                                                                                         -IssueMsg "Waring The Azure Active Directory Group $($AADGroupName) doesn't exist! Please review the configuration settings or delete the configuration!"
                                         
                                         if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
                                         {
