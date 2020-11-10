@@ -235,6 +235,7 @@ try
                                         $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
                                                                                          -TableRowKey $config.RowKey `
                                                                                          -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueType "AAD-Del" `
                                                                                          -IssueMsg "Waring The Azure Active Directory Group $($config.AADGroupName) doesn't exist! Please review the configuration settings or delete the configuration!"
                                         
                                         if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
@@ -291,6 +292,7 @@ try
                                         $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
                                                                                          -TableRowKey $config.RowKey `
                                                                                          -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueType "AD-Mv" `
                                                                                          -IssueMsg "Waring The Active Directory Group $($config.ADGroupName) was moved from the initial location. Initial Location: $($config.ADGroupDN), new location: $($adgroupresult.DistinguishedName)"
                                         
                                         if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
@@ -334,6 +336,7 @@ try
                                         $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
                                                                                          -TableRowKey $config.RowKey `
                                                                                          -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueType "AD-Del" `
                                                                                          -IssueMsg "Waring The Active Directory Group $($config.ADGroupName) doesn't exist! Please review the configuration settings or delete the configuration!"
                                         
                                         if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
