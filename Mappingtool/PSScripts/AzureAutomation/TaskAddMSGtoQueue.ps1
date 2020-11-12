@@ -153,7 +153,11 @@ function CallRBCreateAADGroup()
                             $option = [System.StringSplitOptions]::RemoveEmptyEntries
                             $permissions = ($newrg.Tags.$global:ConfRGReqTag).split(",", $option)
 
+                            Write-Output "Check if permission remove."
+                            $resultcheckremove = Update-RBAC-Removed -arrtags $permissions -rgname $newrg.ResourceGroupName
+                            Write-Output $resultcheckremove.LogMsg
 
+                            Write-Output "Check if new permission add."
                             foreach($permission in $permissions)
                             {
                                 #section Main RG
