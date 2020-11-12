@@ -154,8 +154,9 @@ function CallRBCreateAADGroup()
                             $permissions = ($newrg.Tags.$global:ConfRGReqTag).split(",", $option)
 
                             Write-Output "Check if permission remove."
-                            $resultcheckremove = Update-RBAC-Removed -arrtags $permissions -rgname $newrg.ResourceGroupName
-                            Write-Output $resultcheckremove.LogMsg
+
+                            $resultcheckremove = Update-RBAC-Removed -arrtags $permissions -aadconfig $aadconfig 
+                            Write-Output $resultcheckremove
 
                             Write-Output "Check if new permission add."
                             foreach($permission in $permissions)

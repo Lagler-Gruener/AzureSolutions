@@ -857,7 +857,7 @@ function Update-RBAC-Removed()
 {
     param (
         [string[]] $arrtags,
-        [string]$rgname
+        [string[]]$aadconfig
         
     )    
 
