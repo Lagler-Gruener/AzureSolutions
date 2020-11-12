@@ -857,7 +857,7 @@ function Update-RBAC-Removed()
 {
     param (
         [string[]] $arrtags,
-        [string[]]$aadconfig
+        [string]$rgname
         
     )    
 
@@ -890,7 +890,7 @@ function Update-RBAC-Removed()
                                                 -ColumnName RBACID `
                                                 -Value $permid -Operator Equal 
 
-                if(!$arrtags.Contains($mappingresult.Mapping.ToUpper()))
+                if(!$arrtags.Contains($mappingresult.Mapping.ToLower()))
                 {
                     $removeresarr = $removeresarr + $mappingresult.Mapping
                     $returnmsg.LogMsg = $returnmsg.LogMsg + "Warning permission $($aadconfitem.AADGroupName) with tag ID: $($mappingresult.Mapping) was removed from resourcegroup $($aadconfitem.AzureRG) `n"
@@ -910,7 +910,14 @@ function Update-RBAC-Removed()
                         $returnmsg.ReturnCode = [ReturnCode]::Error.Value__
                         $returnmsg.ReturnMsg = [ReturnCode]::Error
                     }
-                }                           
+                }  
+                else {
+                    $updateresultValidated = Update-Table-Entry -TableName $($global:ConfConfigurationTable)  `
+                                                                -TablePartitionKey $aadconfitem.PartitionKey `
+                                                                -TableRowKey $aadconfitem.RowKey `
+                                                                -RowKeytoChange "MarkedasDelete" `
+                                                                -RowValuetoChange "0"
+                }                         
             }
 
             $returnmsg.ReturnJsonParameters02 = $removeresarr | ConvertTo-Json

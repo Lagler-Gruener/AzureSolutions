@@ -151,13 +151,13 @@ function CallRBCreateAADGroup()
                         {
                             Write-Output "Split tag value by seperator ,"
                             $option = [System.StringSplitOptions]::RemoveEmptyEntries
-                            $permissions = ($newrg.Tags.$global:ConfRGReqTag).split(",", $option)
+                            $permissions = ($newrg.Tags.$global:ConfRGReqTag).toLower().split(",", $option)
 
                             Write-Output "Check if permission remove."
 
-                            $resultcheckremove = Update-RBAC-Removed -arrtags $permissions -aadconfig $aadconfig 
+                            $resultcheckremove = Update-RBAC-Removed -arrtags $permissions -rgname $newrg.ResourceGroupName 
                             Write-Output $resultcheckremove
-
+                            
                             Write-Output "Check if new permission add."
                             foreach($permission in $permissions)
                             {
@@ -370,7 +370,7 @@ function CallRBCreateAADGroup()
                                     #endregion
                                     Write-Output "----------------------------------------------------------------"
                                 }
-                            }
+                            }                            
                         }
                         else {
                             Write-Output "ResourceGroup have no valid Tag based on configuration (Configuration Tag Name: $($global:ConfRGReqTag))"
