@@ -955,7 +955,7 @@ function CallRBCreateAADGroup()
                                     Write-Output "----------------------------------------------------------------"
                                 }     
                             }  
-                            elseif (($i[0].tlower() -eq "add member to group") -or ($i[0].tolower() -eq "Remove member from group"))   
+                            elseif (($i[0].tolower() -eq "add member to group") -or ($i[0].tolower() -eq "Remove member from group"))   
                             {
                                 $AADGroupName = $i[1].tolower()
                                 $AADGroupID = $i[2].Replace('"',"")
