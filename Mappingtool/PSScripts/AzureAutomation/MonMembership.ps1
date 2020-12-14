@@ -36,7 +36,9 @@ using module MappingTool
 [CmdletBinding()]
 param (
     [parameter (Mandatory=$true)]
-    [object] $ConfigTableData
+    [object] $ConfigTableData,
+    [ValidateSet('true','false')]
+    $DebugScript
 )
 
 #######################################################################################################################
@@ -55,6 +57,14 @@ Get-Variable-Assets-UnEnc
 
 try 
 {
+    if($DebugScript -eq "true")
+    {
+        $MonMem = $ConfigTableData | ConvertFrom-Json
+    }
+    else {
+        $MonMem = $ConfigTableData
+    } 
+
     Write-Output "Connect to Azure"
         $loginazureresult = Login-Azure
     Write-Output "----------------------------------------------------------------"
@@ -72,7 +82,7 @@ try
                 #Section storage context
                 if($null -ne $ctx)
                 {                  
-                    foreach ($config in $ConfigTableData)
+                    foreach ($config in $MonMem)
                     {
                         Write-Output "Check configuration setting:"
                         Write-Output "AADGroupName: $($config.AADGroupName)"
@@ -120,14 +130,28 @@ try
                                             foreach($member in $adgroupresult.Members)
                                             {
                                                 $memberdetails = Get-ADUser -Identity $member
-                                                $member = @{"Name"=$memberdetails.Name;
-                                                            "UserPrincipalName"=$memberdetails.UserPrincipalName;
-                                                            "Surname"=$memberdetails.Surname;
-                                                            "GivenName"=$memberdetails.GivenName;
-                                                            "SID"=$memberdetails.SID.value}     
+
+                                                if(!($null -eq $memberdetails.UserPrincipalName))
+                                                {
+                                                    $member = @{"Name"=$memberdetails.Name;
+                                                                "UserPrincipalName"=$memberdetails.UserPrincipalName;
+                                                                "Surname"=$memberdetails.Surname;
+                                                                "GivenName"=$memberdetails.GivenName;
+                                                                "SID"=$memberdetails.SID.value}     
                                                 
-                                                $addmember = $members.Add($member)
-                                                Write-Output "Add member $($member.UserPrincipalName) to the array."                                            
+                                                    $addmember = $members.Add($member)
+                                                    Write-Output "Add member $($member.UserPrincipalName) to the array."                                            
+                                                }
+                                                else {
+                                                    Write-Warning "Waring the user $($memberdetails.Name) with SID $($memberdetails.SID.value), haven't an UPN defined!"
+
+                                                    Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Warning) `
+                                                                                -ScriptName "MonMembership.ps1" `
+                                                                                -ScriptSection "add msg to queue/Get-ADUser" `
+                                                                                -InfoMessage "" `
+                                                                                -WarnMessage "Waring the user $($memberdetails.Name) with SID $($memberdetails.SID.value), haven't an UPN defined!" `
+                                                                                -ErrorMessage ""
+                                                }
                                             }         
     
                                             $jsonmsg = @{"ADGroupName" = $config.ADGroupName
@@ -184,7 +208,7 @@ try
                                                                                     -TableRowKey $config.RowKey `
                                                                                     -TablePartitionKey $config.PartitionKey `
                                                                                     -RowKeytoChange "Validatet" `
-                                                                                    -RowValuetoChange "false"
+                                                                                    -RowValuetoChange "false"                                                                                    
 
                                         if(($updateresultValidated.ReturnCode -ne [ReturnCode]::Success.Value__))
                                         {
@@ -207,7 +231,34 @@ try
 
                                                 #endregion
                                         }  
+
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
+                                                                                         -TableRowKey $config.RowKey `
+                                                                                         -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueType "AAD-Del" `
+                                                                                         -IssueMsg "Waring The Azure Active Directory Group $($config.AADGroupName) doesn't exist! Please review the configuration settings or delete the configuration!"
                                         
+                                        if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
+                                        {
+                                            #region Script Error
+                                                 
+                                                Write-Error "Error add issue to table. (go to output for more details)"
+                                                Write-Output "Error add issue to table."   
+                                                Write-Output "Return Message for ADDIssuetoTable $($addissuetotable.LogMsg)"                                                                                                                           
+                                                Write-Output "----------------------------------------------------------------"
+                                                 
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -ScriptName "MonMembership.ps1" `
+                                                                            -ScriptSection "Add-Info-to-ConfigIssue-Table/AD Group not found" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage "Error update the configuration row." `
+                                                                            -AdditionalInfo "Return Message for Validated  update: $($addissuetotable.LogMsg)"   
+                                                 
+                                                 
+                                            #endregion
+                                        }
+
                                         Write-Output "----------------------------------------------------------------"
 
                                         #region script warning
@@ -230,13 +281,40 @@ try
                                     #region script warning
 
                                         Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Warning) `
-                                        -ScriptName "MonMembership.ps1" `
-                                        -ScriptSection "check location/Check group location" `
-                                        -InfoMessage "" `
-                                        -WarnMessage "Waring The Active Directory Group $($config.ADGroupName) was moved from the initial location. Initial Location: $($config.ADGroupDN), new location: $($adgroupresult.DistinguishedName)" `
-                                        -ErrorMessage ""
+                                                                    -ScriptName "MonMembership.ps1" `
+                                                                    -ScriptSection "check location/Check group location" `
+                                                                    -InfoMessage "" `
+                                                                    -WarnMessage "Waring The Active Directory Group $($config.ADGroupName) was moved from the initial location. Initial Location: $($config.ADGroupDN), new location: $($adgroupresult.DistinguishedName)" `
+                                                                    -ErrorMessage ""
 
                                     #endregion
+
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
+                                                                                         -TableRowKey $config.RowKey `
+                                                                                         -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueType "AD-Mv" `
+                                                                                         -IssueMsg "Waring The Active Directory Group $($config.ADGroupName) was moved from the initial location. Initial Location: $($config.ADGroupDN), new location: $($adgroupresult.DistinguishedName)"
+                                        
+                                        if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
+                                        {
+                                            #region Script Error
+                                                 
+                                                Write-Error "Error add issue to table. (go to output for more details)"
+                                                Write-Output "Error add issue to table."   
+                                                Write-Output "Return Message for ADDIssuetoTable $($addissuetotable.LogMsg)"                                                                                                                           
+                                                Write-Output "----------------------------------------------------------------"
+                                                 
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -ScriptName "MonMembership.ps1" `
+                                                                            -ScriptSection "Add-Info-to-ConfigIssue-Table/AD Group not found" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage "Error update the configuration row." `
+                                                                            -AdditionalInfo "Return Message for Validated  update: $($addissuetotable.LogMsg)"   
+                                                 
+                                                 
+                                            #endregion
+                                        }
                                 }
                             }
                             else {
@@ -254,6 +332,33 @@ try
                                                                 -ErrorMessage ""
 
                                 #endregion
+
+                                        $addissuetotable = Add-Info-to-ConfigIssue-Table -TableName $global:ConfPermIssueTable `
+                                                                                         -TableRowKey $config.RowKey `
+                                                                                         -TablePartitionKey $config.PartitionKey `
+                                                                                         -IssueType "AD-Del" `
+                                                                                         -IssueMsg "Waring The Active Directory Group $($config.ADGroupName) doesn't exist! Please review the configuration settings or delete the configuration!"
+                                        
+                                        if(($addissuetotable.ReturnCode -ne [ReturnCode]::Success.Value__))
+                                        {
+                                            #region Script Error
+                                                 
+                                                Write-Error "Error add issue to table. (go to output for more details)"
+                                                Write-Output "Error add issue to table."   
+                                                Write-Output "Return Message for ADDIssuetoTable $($addissuetotable.LogMsg)"                                                                                                                           
+                                                Write-Output "----------------------------------------------------------------"
+                                                 
+                                                Write-State-to-LogAnalytics -MessageType $([ReturnCode]::Error) `
+                                                                            -ScriptName "MonMembership.ps1" `
+                                                                            -ScriptSection "Add-Info-to-ConfigIssue-Table/AD Group not found" `
+                                                                            -InfoMessage "" `
+                                                                            -WarnMessage "" `
+                                                                            -ErrorMessage "Error update the configuration row." `
+                                                                            -AdditionalInfo "Return Message for Validated  update: $($addissuetotable.LogMsg)"   
+                                                 
+                                                 
+                                            #endregion
+                                        }
 
                             }                                                    
                         }

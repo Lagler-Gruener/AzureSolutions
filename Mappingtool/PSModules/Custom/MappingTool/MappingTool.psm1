@@ -108,7 +108,8 @@ function Get-Variable-Assets-UnEnc
         #Application tables
         $global:ConfConfigurationTable = Get-AutomationVariable -Name "Conf-App-Configuration-Table"                    
         $global:ConfConfigurationTableBackup = Get-AutomationVariable -Name "Conf-App-Configuration-TableBak"                    
-        $global:ConfPermMappingTable = Get-AutomationVariable -Name "Conf-App-Mapping-Table"        
+        $global:ConfPermMappingTable = Get-AutomationVariable -Name "Conf-App-Mapping-Table" 
+        $global:ConfPermIssueTable = Get-AutomationVariable -Name "Conf-App-Config-Issues"       
         
         #Application queues        
         $global:ConfCloudMsgQueue = Get-AutomationVariable -Name "Conf-App-CL-Process-Msg-Queue"
@@ -734,7 +735,7 @@ function Get-RBAC-Mapping()
             if($null -eq $mappingresult)
             {
                 $mappingresult = Get-AzTableRow -Table $ConfPermMappingTable -ColumnName Mapping `
-                                            -Value $mappingvalue.ToUpper() -Operator Equal 
+                                                -Value $mappingvalue.ToUpper() -Operator Equal 
             }
         
         if($null -ne $submappingresult)
@@ -850,6 +851,92 @@ function Get-RBAC-Mapping()
         
         return $returnmsg
     }
+}
+
+function Update-RBAC-Removed()
+{
+    param (
+        [string[]] $arrtags,
+        [string]$rgname
+        
+    )    
+
+    $returnmsg = [ReturnMsg]::new()
+
+    try {
+
+        $returnmsg.LogMsg = "Get all rows from configuration table. `n"
+
+        $tableconfig = Get-Info-from-Config-Table -TableRowKey "*" `
+                                                  -TablePartitionKey "RBACPerm" `
+                                                  -TableName $($global:ConfConfigurationTable)        
+
+        if($tableconfig.ReturnMsg -eq [ReturnCode]::Success)
+        {
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Done `n"
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Find relevant rows based on filter: AzureRG = $($rgname.ToLower())"
+            $aadconfig = ($tableconfig.ReturnJsonParameters02 | ConvertFrom-Json) | where {$_.AzureRG.ToLower() -eq $rgname.ToLower()}
+
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Check configuration"
+            $removeresarr = @()
+            foreach($aadconfitem in $aadconfig)
+            {
+                $table = Get-AzTableTable -TableName $($global:ConfPermMappingTable) `
+                                          -resourceGroup $($global:ConfApplRG) `
+                                          -storageAccountName $($global:ConfApplStrAcc)  
+
+                $permid = $aadconfitem.RBACPermID
+                $mappingresult = Get-AzTableRow -Table $table `
+                                                -ColumnName RBACID `
+                                                -Value $permid -Operator Equal 
+
+                if(!$arrtags.Contains($mappingresult.Mapping.ToLower()))
+                {
+                    $removeresarr = $removeresarr + $mappingresult.Mapping
+                    $returnmsg.LogMsg = $returnmsg.LogMsg + "Warning permission $($aadconfitem.AADGroupName) with tag ID: $($mappingresult.Mapping) was removed from resourcegroup $($aadconfitem.AzureRG) `n"
+                    $returnmsg.LogMsg = $returnmsg.LogMsg + "Update permission with flag 'MarkedasDelete' = 1 `n"
+                                                           
+                    $updateresultValidated = Update-Table-Entry -TableName $($global:ConfConfigurationTable)  `
+                                                                -TablePartitionKey $aadconfitem.PartitionKey `
+                                                                -TableRowKey $aadconfitem.RowKey `
+                                                                -RowKeytoChange "MarkedasDelete" `
+                                                                -RowValuetoChange "1"
+                    if($updateresultValidated.ReturnMsg -eq [ReturnCode]::Success)
+                    {
+                        $returnmsg.LogMsg = $returnmsg.LogMsg + "Done `n"
+                    }
+                    else {                        
+                        $returnmsg.LogMsg = $returnmsg.LogMsg + "Error in Function Update-Table-Entry. Error: $($updateresultValidated.LogMsg)"
+                        $returnmsg.ReturnCode = [ReturnCode]::Error.Value__
+                        $returnmsg.ReturnMsg = [ReturnCode]::Error
+                    }
+                }  
+                else {
+                    $updateresultValidated = Update-Table-Entry -TableName $($global:ConfConfigurationTable)  `
+                                                                -TablePartitionKey $aadconfitem.PartitionKey `
+                                                                -TableRowKey $aadconfitem.RowKey `
+                                                                -RowKeytoChange "MarkedasDelete" `
+                                                                -RowValuetoChange "0"
+                }                         
+            }
+
+            $returnmsg.ReturnJsonParameters02 = $removeresarr | ConvertTo-Json
+            $returnmsg.ReturnCode = [ReturnCode]::Success.Value__
+            $returnmsg.ReturnMsg = [ReturnCode]::Success
+        }
+        else {
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Error in Function Get-Info-from-Config-Table. Error: $($loginazureresult.LogMsg)"
+            $returnmsg.ReturnCode = [ReturnCode]::Error.Value__
+            $returnmsg.ReturnMsg = [ReturnCode]::Error
+        }
+    }    
+    catch {
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Error in section Update-Table-Entry. Error message: $($_.Exception.Message) `n"
+            $returnmsg.ReturnCode = [ReturnCode]::Error.Value__
+            $returnmsg.ReturnMsg = [ReturnCode]::Error
+        }    
+
+    return $returnmsg
 }
 
 function Update-Table-Entry
@@ -994,7 +1081,8 @@ function Add-Info-to-Config-Table()
                                                                                      "ADGroupuSNChanged"= "0"; `
                                                                                      "AzureRG"=$AZRG; `
                                                                                      "Validatet"=$Validated; `
-                                                                                     "SubscriptionID" = $SubscriptionID}
+                                                                                     "SubscriptionID" = $SubscriptionID;
+                                                                                     "MarkedasDelete" = "0"}
 
         $returnmsg.ReturnJsonParameters02 = $resultaddtableinfo
         $returnmsg.ReturnCode = [ReturnCode]::Success.Value__
@@ -1036,6 +1124,66 @@ function Add-Info-to-ConfigBackup-Table()
                                                  -partitionKey $TablePartitionKey `
                                                  -rowKey $TableRowKey `
                                                  -property @{"BackupData"=$BackupData}
+
+        $returnmsg.ReturnJsonParameters02 = $resultaddtableinfo
+        $returnmsg.ReturnCode = [ReturnCode]::Success.Value__
+        $returnmsg.ReturnMsg = [ReturnCode]::Success
+    }
+    catch
+    {
+        $returnmsg.LogMsg = $returnmsg.LogMsg + "Error in section Add-Info-to-ConfigBackup-Table. Error message: $($_.Exception.Message) `n"
+        $returnmsg.ReturnCode = [ReturnCode]::Error.Value__
+        $returnmsg.ReturnMsg = [ReturnCode]::Error
+    }
+
+    return $returnmsg
+}
+
+function Add-Info-to-ConfigIssue-Table()
+{
+    param (
+        [parameter (Mandatory=$true)]
+        [string] $TablePartitionKey,
+        [parameter (Mandatory=$true)]
+        [string] $TableRowKey,
+        [parameter (Mandatory=$true)]
+        [ValidateSet('AD-Del','AD-Mv','AAD-Del')]
+        [string] $IssueType,
+        [parameter (Mandatory=$true)]
+        [string] $IssueMsg,
+        [parameter (Mandatory=$true)]
+        [string] $TableName      
+    )
+
+    $returnmsg = [ReturnMsg]::new()
+
+    try
+    {
+        $returnmsg.LogMsg = "Get Azure Table $TableName in RG $($global:ConfApplRG) at Storage Account $($global:ConfApplStrAcc) `n"
+            $table = Get-AzTableTable -TableName $TableName -resourceGroup $($global:ConfApplRG) `
+                                      -storageAccountName $($global:ConfApplStrAcc)
+
+        $returnmsg.LogMsg = "Check if entry always exist `n"
+        $keyresult = Get-AzTableRow -Table $table -PartitionKey $TablePartitionKey -RowKey $TableRowKey
+
+        if($null -ne $keyresult)
+        {
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Update issue in table `n"
+            $keyresult.IssueType = $IssueType
+            $keyresult.IssueMsg = $IssueMsg
+
+            $updateresult = $keyresult | Update-AzTableRow -table $table
+
+        }
+        else {
+            $returnmsg.LogMsg = $returnmsg.LogMsg + "Add new issue to table `n"
+            $resultaddtableinfo = Add-AzTableRow -table $table `
+                                                 -partitionKey $TablePartitionKey `
+                                                 -rowKey $TableRowKey `
+                                                 -property @{"IssueType"=$IssueType;`
+                                                             "IssueMsg"=$IssueMsg}
+            
+        }
 
         $returnmsg.ReturnJsonParameters02 = $resultaddtableinfo
         $returnmsg.ReturnCode = [ReturnCode]::Success.Value__
@@ -1217,4 +1365,35 @@ function Write-State-to-LogAnalytics
                           -sharedKey $($MappingToolLogACon.SharedKey) `
                           -body ([System.Text.Encoding]::UTF8.GetBytes($json)) `
                           -logType $LogName  
+}
+
+######################################################################
+#
+# Admin portal functions
+#
+######################################################################
+
+function Call-Fix-Configuration-Issue
+{
+    param (
+        [parameter (Mandatory=$true)]
+        [object] $PartitionKey,
+        [parameter (Mandatory=$true)]
+        [object] $RowKey,
+        [parameter (Mandatory=$true)]
+        [object] $Action
+    )
+
+    $tableconfig = Get-Info-from-Config-Table -TableRowKey $RowKey `
+                                              -TablePartitionKey $PartitionKey `
+                                              -TableName $global:ConfConfigurationTable
+
+    if($Action -eq "fix")
+    {
+        
+    }
+    elseif($Action -eq "discard")
+    {
+
+    }
 }
