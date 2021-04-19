@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using MappingTool.Models;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
@@ -42,6 +44,24 @@ namespace MappingTool
 
         public static async Task<Boolean> GetConfiguration()
         {
+            var defaultAzureCredentialOptions = new DefaultAzureCredentialOptions();
+            defaultAzureCredentialOptions.ExcludeAzureCliCredential = true;
+            defaultAzureCredentialOptions.ExcludeEnvironmentCredential = true;
+            defaultAzureCredentialOptions.ExcludeInteractiveBrowserCredential = true;
+            defaultAzureCredentialOptions.ExcludeManagedIdentityCredential = false;
+            defaultAzureCredentialOptions.ExcludeSharedTokenCacheCredential = true;
+            defaultAzureCredentialOptions.ExcludeVisualStudioCodeCredential = true;
+            defaultAzureCredentialOptions.ExcludeVisualStudioCredential = false;
+
+            defaultAzureCredentialOptions.VisualStudioTenantId = "fbdbcef1-5d3b-4d48-8827-b3d4b35c8473";
+
+            var credential = new DefaultAzureCredential(defaultAzureCredentialOptions);
+
+            var client = new SecretClient(new Uri("https://appmtkeyvb76b5ab98b0a464.vault.azure.net"), credential);
+
+            KeyVaultSecret secred = client.GetSecret("MappingTool-LogA-SharedKey");
+            string a = secred.Value;
+
             AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
             var keyVaultClient = new KeyVaultClient(
                 new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
