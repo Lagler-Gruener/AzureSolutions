@@ -1,0 +1,45 @@
+﻿@using MVCGrid.Web
+
+<div class="jumbotron MTHeaderStyle">
+    <h1>Azure Resource Groups</h1>
+    <p class="lead">
+        In that section, you can see all existing resource groups/subscription and you also have the <br />
+        possibility to create a new or update an existing Azure resource group. <br /><br />
+        <b>!IMPORTANT!</b> New requested Resource Groups are only available in that view, if there are some <br />
+        permissions assigned and when that process is finished. So keep in mind, it can take some time.
+    </p>
+</div>
+
+
+@using (Html.BeginForm())
+{
+    <center>
+        <div class="MTGridSizeFull">
+            <div style="text-align:right">
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })                
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-inline MTGridInner">
+                    <div class="form-group" style="padding-right:10px">
+                        <h4>Filter by:</h4>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="ResourceGroup Name"
+                               data-mvcgrid-type="filter" data-mvcgrid-option="AzureRG" />
+                    </div>
+                    <div class="form-group" style="padding-left:10px">
+                        <button type="button" class="btn btn-success" data-mvcgrid-apply-filter="click">Apply</button>
+                    </div>
+                    <div class="form-group MTGridInnerButtonright">
+                        @Html.ActionLink("New Resource Group", "CreateAzureRG", "AdminTools", new { @class = "btn btn-success" })
+                    </div>                    
+                </div>
+            </div>
+            @Html.MVCGrid("ConfiAzureRGs")
+        </div>
+    </center>
+}
+
+
+
+

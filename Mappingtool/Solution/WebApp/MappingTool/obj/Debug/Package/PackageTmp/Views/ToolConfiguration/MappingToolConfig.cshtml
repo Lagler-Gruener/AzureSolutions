@@ -1,0 +1,46 @@
+﻿
+@{
+    ViewBag.Title = "MappingToolConfig";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron MTHeaderStyle">
+    <h1>Mappingtool configuration settings</h1>
+    <p class="lead">In that section each admin can view and edit the current MappingTool configuration.</p>
+</div>
+
+@using (Html.BeginForm())
+{
+    <center>
+        <div class="MTGridSizeFull">
+            <div style="text-align:right">
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-inline MTGridInner">
+                    <div class="form-group" style="padding-right:10px">
+                        <h4>Filter by:</h4>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Configurationname"
+                               data-mvcgrid-type="filter" data-mvcgrid-option="ConfigName" />
+                    </div>
+                    <div class="form-group" style="padding-right:10px; padding-left:10px">
+                        <h4>Only Editable:</h4>
+                    </div>
+                    <div class="form-group">
+                        <select class="form-control" data-mvcgrid-type="filter" data-mvcgrid-option="Edit">
+                            <option value=""></option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group MTGridInnerButtonright">
+                        <button type="button" class="btn btn-success" data-mvcgrid-apply-filter="click">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            @Html.MVCGrid("MappingToolConfig")
+        </div>
+    </center>
+}

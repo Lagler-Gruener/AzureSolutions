@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Mappingtool</title>
+    @Styles.Render("~/Content/css")
+    <link rel="stylesheet" href="~/Content/Mappingtool.css" />
+
+    <script src="~/Scripts/popper.min.js"></script>
+    <script src="~/Scripts/jquery-3.3.1.slim.min.js"></script>
+    <script src="~/Scripts/bootstrap.js"></script>
+
+
+</head>
+<body>
+    <div class="container body-content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="@Url.Action("Index", "Home")">Mappingtool Admin</a>
+
+            <div class="collapse navbar-collapse navbar navbar-light bg-light" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="@Url.Action("Index", "Home")">Home</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="@Url.Action("State", "Home")">State</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Admin tools
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="nav-link" href="@Url.Action("AzureRG", "AdminTools")" tabindex="-1">Manage Azure RGs</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="nav-link" href="@Url.Action("RBACMarkedasDelete", "AdminTools")" title="Azure RG permissions marked as delete">Perm MAD</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="nav-link" href="@Url.Action("MappingToolIssues", "AdminTools")" style="pointer-events:none; cursor:default">Tool Issues</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Tool Configuration
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="@Url.Action("MappingToolConfig", "ToolConfiguration")">Global Configuration</a>
+                            <a class="dropdown-item" href="@Url.Action("Subscriptions", "ToolConfiguration")">Global Subscriptions</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@Url.Action("RBACMapping", "ToolConfiguration")">RBAC mapping</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@Url.Action("RBACArchiv", "ToolConfiguration")">RBAC Archiv</a>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link disabled" href="#" tabindex="-1">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container body-content">
+        @RenderBody()
+        <div style="padding-top:50px">
+            <hr />
+            <footer>
+                <p>&copy; @DateTime.Now.Year - Azure mappingtool admin</p>
+            </footer>
+        </div>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    <script src="~/MVCGridHandler.axd/script.js"></script>
+    <script src="~/Content/sh/shCore.js"></script>
+    <script src="~/Content/sh/shBrushJScript.js"></script>
+    <script src="~/Content/sh/shBrushCSharp.js"></script>
+    <script type="text/javascript">
+        SyntaxHighlighter.all();
+    </script>
+    @RenderSection("scripts", required: false)
+</body>
+</html>

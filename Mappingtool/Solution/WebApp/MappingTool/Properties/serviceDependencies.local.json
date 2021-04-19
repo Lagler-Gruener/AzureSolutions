@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "appInsights1": {
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/microsoft.insights/components/AppMTAdmintoolb76b5ab98b0a464",
+      "type": "appInsights.azure",
+      "connectionId": "APPINSIGHTS_CONNECTIONSTRING",
+      "secretStore": null
+    }
+  }
+}

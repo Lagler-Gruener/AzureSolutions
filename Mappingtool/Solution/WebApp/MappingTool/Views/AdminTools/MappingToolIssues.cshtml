@@ -1,0 +1,53 @@
+﻿
+@{
+    ViewBag.Title = "MappingToolIssues";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron MTHeaderStyle">
+    <h1>Mappingtool issues</h1>
+    <p class="lead">
+        In that section, you can see, if there is any configuration or <br />
+        Runbook issues available.
+    </p>
+</div>
+
+@using (Html.BeginForm())
+{
+<center>
+    <div class="MTGridSizeFull">
+        <div style="text-align:right">
+            @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+        </div>
+        <div class="well MTGridHeader">
+            <div class="form-inline MTGridInner">
+                <div class="form-group" style="padding-right:10px">
+                    <h4>Azure configuration issues</h4>
+                </div>
+            </div>
+        </div>
+        <div style="padding-top:20px">
+
+        </div>
+    </div>
+
+    <div style="padding-top:40px">
+    </div>
+    <div class="MTGridSizeFull">
+        <div style="text-align:right">
+            @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+        </div>
+        <div class="well MTGridHeader">
+            <div class="form-inline MTGridInner">
+                <div class="form-group" style="padding-right:10px">
+                    <h4>Failes Azure automation runbooks</h4>
+                </div>
+            </div>
+        </div>
+        <div style="padding-top:20px">
+
+        </div>
+    </div>
+</center>
+}
+

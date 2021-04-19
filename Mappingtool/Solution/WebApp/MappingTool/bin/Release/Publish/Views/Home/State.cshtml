@@ -1,0 +1,102 @@
+﻿@{
+    ViewBag.Title = "State";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script type="text/javascript">
+    $(function () {
+        $('#btnreloadgrid').click(function () {
+            MVCGrid.reloadGrid('MappingQueueMessages');
+            MVCGrid.reloadGrid('RBACConfigAAD');
+            MVCGrid.reloadGrid('RBACConfigRBAC');
+            MVCGrid.reloadGrid('MappingToolRunbookState');
+        });
+    });
+</script>
+
+<div class="jumbotron MTHeaderStyle">
+    <h1>App state</h1>
+    <p class="lead">
+        In that section you'll get an overview about the whole <br />
+        application state.
+        Includet are:
+        <ul>
+            <li>
+                Current, last as well failed and success state about all runbooks
+            </li>
+            <li>
+                How many messages are in the queues
+            </li>
+            <li>
+                The current RBAC (Azure AD and Azure RG) configuration
+            </li>
+        </ul>
+    </p>
+
+    @using (Html.BeginForm())
+    {
+        <div style="text-align:right">
+            <button class="btn btn-success" id="btnreloadgrid">Reload</button>
+        </div>
+    }
+</div>
+
+@using (Html.BeginForm())
+{
+    <center>
+        <div class="MTGridSizeFull">
+            <div style="text-align:right">
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-inline" style="width:100%; position:relative">
+                    <div class="form-group" style="padding-right:10px">
+                        <h4>Azure Automation Runbooks state</h4>
+                    </div>
+                </div>
+            </div>
+            <div style="padding-top:20px">
+                @Html.MVCGrid("MappingToolRunbookState")
+            </div>
+
+            <div style="padding-top:40px">
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-inline" style="width:100%; position:relative">
+                    <div class="form-group" style="padding-right:10px">
+                        <h4>Messages in Azure storage queue</h4>
+                    </div>
+                </div>
+            </div>
+            <div style="padding-top:20px">
+                @Html.MVCGrid("MappingQueueMessages")
+            </div>
+
+            <div style="padding-top:40px">
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-inline" style="width:100%; position:relative">
+                    <div class="form-group" style="padding-right:10px">
+                        <h4>Azure AD Permissions</h4>
+                    </div>
+                </div>
+            </div>
+            <div style="padding-top:20px">
+                @Html.MVCGrid("RBACConfigAAD")
+            </div>
+
+            <div style="padding-top:40px">
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-inline" style="width:100%; position:relative">
+                    <div class="form-group" style="padding-right:10px">
+                        <h4>Azure RG Permissions</h4>
+                    </div>
+                </div>
+            </div>
+            <div style="padding-top:20px">
+                @Html.MVCGrid("RBACConfigRBAC")
+            </div>
+        </div>
+    </center>
+}
+
