@@ -600,9 +600,9 @@ C:\VSCode-Workspace\GitRepos\Priv\AzureSolutions\Mappingtool\Solution\WebApp\Map
 C:\VSCode-Workspace\GitRepos\Priv\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.csproj.CopyComplete
 C:\VSCode-Workspace\GitRepos\Priv\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.dll
 C:\VSCode-Workspace\GitRepos\Priv\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.pdb
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Content\bootstrap\_reboot.scss
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Azure.Documents.ServiceInterop.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Cosmos.CRTCompat.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Content\bootstrap\_reboot.scss
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Content\Mappingtool.css
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\MappingTool.dll.config
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\MappingTool.dll
@@ -771,7 +771,6 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Mic
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Configuration.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Configuration.Abstractions.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Primitives.xml
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.pdb
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Logging.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Tokens.xml
@@ -815,3 +814,12 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Deb
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.csproj.CopyComplete
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.pdb
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Security.KeyVault.Secrets.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Security.KeyVault.Secrets.xml
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Identity.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.Extensions.Msal.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Security.Cryptography.ProtectedData.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Identity.xml
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.xml
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.Extensions.Msal.xml
