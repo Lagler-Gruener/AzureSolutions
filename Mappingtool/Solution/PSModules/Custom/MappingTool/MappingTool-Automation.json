@@ -1,0 +1,29 @@
+{ 
+    "ConnectionFields": [
+    {
+        "IsEncrypted": false,
+        "IsOptional": false,
+        "Name": "TenantId",
+        "TypeName": "System.String"
+    },
+    {
+        "IsEncrypted": false,
+        "IsOptional": false,
+        "Name": "SubscriptionID",
+        "TypeName": "System.String"
+    },
+    {
+        "IsEncrypted": false,
+        "IsOptional": false,
+        "Name": "ApplicationID",
+        "TypeName": "System.String"
+    },    
+    {
+        "IsEncrypted": true,
+        "IsOptional": false,
+        "Name": "Secret",
+        "TypeName": "System.String"
+    }],
+    "ConnectionTypeName": "Mappingtool.SP",
+    "IntegrationModuleName": "Mappingtool.SP"
+}

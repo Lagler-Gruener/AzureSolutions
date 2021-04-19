@@ -1,0 +1,90 @@
+﻿/*
+    Site Header Style
+*/
+.MTHeaderStyle {
+    height: 350px;
+}
+
+
+/*
+    Site Table Style
+*/
+table {
+    margin-bottom: 1rem;
+    color: #212529;
+    border: 1px solid #dee2e6;
+}
+
+#t01 tr:nth-child(even) {
+    background-color: #eee;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border: 1px solid #dee2e6;
+}
+
+#t01 tr:nth-child(odd) {
+    vertical-align: middle;
+}
+
+#t01 th {
+    vertical-align: middle;
+}
+
+/*
+    Style for Gridview Header
+*/
+
+.MTGridSizeFull {
+    width: 1050px;
+    padding-top: 20px
+}
+
+.MTGridSizeMedium {
+    width: 900px;
+    padding-top: 20px
+}
+
+.MTGridHeader {
+    border-bottom: solid;
+    padding: 5px;
+    border-color: gray
+}
+
+.MTGridInner {
+    width: 100%;
+    position: relative
+}
+
+.MTGridInnerButtonright {
+    position: absolute;
+    right: 0px;
+}
+
+
+
+/*
+    Default changes
+*/
+
+h4 {
+    color:blue
+}
+
+h5{
+    font-weight:bold
+}
+
+th{
+    font-weight:bold;
+}
+
+a {
+    color: #28a745;
+}
+
+a:hover{
+    color: lightgreen
+}

@@ -1,0 +1,41 @@
+﻿@{
+    ViewBag.Title = "Subscriptions";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron MTHeaderStyle">
+    <h1>Mappingtool subscriptions</h1>
+    <p class="lead">
+        In that section each admin can see the current Subscription configuration.
+    </p>
+</div>
+
+@using (Html.BeginForm())
+{
+    <center>
+        <div class="MTGridSizeFull">
+            <div style="text-align:right">
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-inline MTGridInner">
+                    <div class="form-group" style="padding-right:10px">
+                        <b>Filter by:</b>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="SubscriptionID"
+                               data-mvcgrid-type="filter" data-mvcgrid-option="SubscriptionID" />
+                    </div>
+                    <div class="form-group" style="padding-left:10px">
+                        <button type="button" class="btn btn-success" data-mvcgrid-apply-filter="click">Apply</button>
+                    </div>
+                    <div class="form-group MTGridInnerButtonright">
+                        @Html.ActionLink("Add Subscription", "SubMappingNew", "ToolConfiguration", new { @class = "btn btn-success" })
+                    </div>
+                </div>
+            </div>
+            @Html.MVCGrid("SubMappingConfig")
+        </div>
+    </center>
+}
+

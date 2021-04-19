@@ -1,0 +1,56 @@
+﻿
+@model MappingTool.Models.listrbacmapping
+
+@{
+    ViewBag.Title = "Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+    <link rel="stylesheet" href="~/Content/MappingTool/TableStyle.css" />
+
+<div class="jumbotron MTHeaderStyle">
+    <h1>Edit configuration</h1>
+    <p class="lead">In that section each admin can configure edit the existing RBAC mapping configuration.</p>
+</div>
+
+@using (Html.BeginForm("RBACMappingSaveExistConfig", "ToolConfiguration", FormMethod.Post))
+{
+    @Html.HiddenFor(m => m.RBACID, new { @id = "RBACID" })
+<center>
+
+    <div class="MTGridSizeFull">
+        <div style="text-align:right">
+            @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+        </div>
+        <div class="well MTGridHeader">
+            <div class="form-inline MTGridInner">
+                <div class="form-group" style="padding-right:10px">
+                    <h4>Change setting:</h4>&nbsp; <h5>@Html.DisplayFor(m => m.RBACPerm)</h5>
+                </div>
+                <div class="form-group MTGridInnerButtonright">
+                    <input type="submit" value="Save configuration" class="btn btn-success" />
+                </div>
+            </div>
+        </div>
+        <div style="padding-top:20px">
+            <table id="t01" style="width:100%">
+                <tr>
+                    <th>Permission</th>
+                    <th>Mapping</th>
+                </tr>
+                <tr>
+                    <td>
+                        @Html.DisplayFor(m => m.RBACPerm)
+                    </td>
+                    <td>
+                        @Html.EditorFor(m => m.Mapping, new { htmlAttributes = new { @class = "form-control" } })
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div style="text-align:left">
+            @Html.ActionLink("< Back to List", "RBACMapping", null, new { @class = "btn btn-outline-success" })
+        </div>
+    </div>
+</center>
+}
