@@ -1,8 +1,6 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using MappingTool.Models;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.Services.AppAuthentication;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,37 +46,45 @@ namespace MappingTool
             defaultAzureCredentialOptions.ExcludeAzureCliCredential = true;
             defaultAzureCredentialOptions.ExcludeEnvironmentCredential = true;
             defaultAzureCredentialOptions.ExcludeInteractiveBrowserCredential = true;
-            defaultAzureCredentialOptions.ExcludeManagedIdentityCredential = false;
+
+            if (WebConfigurationManager.AppSettings["EnableMI"].ToString() == "false")
+            {
+                defaultAzureCredentialOptions.ExcludeManagedIdentityCredential = true;
+            }            
+
             defaultAzureCredentialOptions.ExcludeSharedTokenCacheCredential = true;
             defaultAzureCredentialOptions.ExcludeVisualStudioCodeCredential = true;
             defaultAzureCredentialOptions.ExcludeVisualStudioCredential = false;
 
-            defaultAzureCredentialOptions.VisualStudioTenantId = "fbdbcef1-5d3b-4d48-8827-b3d4b35c8473";
-
             var credential = new DefaultAzureCredential(defaultAzureCredentialOptions);
 
-            var client = new SecretClient(new Uri("https://appmtkeyvb76b5ab98b0a464.vault.azure.net"), credential);
+            var client = new SecretClient(new Uri(WebConfigurationManager.AppSettings["KeyVault"].ToString()), credential);
 
             KeyVaultSecret secred = client.GetSecret("MappingTool-LogA-SharedKey");
             string a = secred.Value;
 
-            AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
-            var keyVaultClient = new KeyVaultClient(
-                new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-            
-            var appid = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["MappingToolAppID"].ToString());
+            //AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
+            //var keyVaultClient = new KeyVaultClient(
+            //    new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+
+            //var appid = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["MappingToolAppID"].ToString());
+            KeyVaultSecret appid = client.GetSecret(WebConfigurationManager.AppSettings["MappingToolAppID"].ToString());
             MappingToolAppID = appid.Value;
 
-            var appsecret = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["MappingToolAppSecret"].ToString());
+            //var appsecret = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["MappingToolAppSecret"].ToString());
+            KeyVaultSecret appsecret = client.GetSecret(WebConfigurationManager.AppSettings["MappingToolAppSecret"].ToString());
             MappingToolAppSecret = appsecret.Value;
 
-            var tenantid = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["MappingToolTenantID"].ToString());
+            //var tenantid = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["MappingToolTenantID"].ToString());
+            KeyVaultSecret tenantid = client.GetSecret(WebConfigurationManager.AppSettings["MappingToolTenantID"].ToString());
             MappingToolTenantID = tenantid.Value;
 
-            var appsubscriptionid = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["MappingToolSubscriptionID"].ToString());
+            //var appsubscriptionid = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["MappingToolSubscriptionID"].ToString());
+            KeyVaultSecret appsubscriptionid = client.GetSecret(WebConfigurationManager.AppSettings["MappingToolSubscriptionID"].ToString());
             MappingToolSubscriptionID = appsubscriptionid.Value;
 
-            var connectionstring = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["KeyVaultStorageKey"].ToString());
+            //var connectionstring = await keyVaultClient.GetSecretAsync(WebConfigurationManager.AppSettings["KeyVaultStorageKey"].ToString());
+            KeyVaultSecret connectionstring = client.GetSecret(WebConfigurationManager.AppSettings["KeyVaultStorageKey"].ToString());
             Connectionstring = connectionstring.Value;
 
             #region Get configuration settings from storage table
