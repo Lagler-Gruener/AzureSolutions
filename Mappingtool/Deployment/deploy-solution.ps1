@@ -18,7 +18,7 @@ param (
     [string]$TenantID = ""
 )
 
-$ErrorActionPreference = ""
+#$ErrorActionPreference = ""
 
 #region Functions
 function Get-RandomCharacters($length, $characters) { 
