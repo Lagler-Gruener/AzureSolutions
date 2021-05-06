@@ -18,7 +18,7 @@ param (
     [string]$TenantID = ""
 )
 
-$ErrorActionPreference = ""
+#$ErrorActionPreference = ""
 
 #region Functions
 function Get-RandomCharacters($length, $characters) { 
@@ -929,12 +929,14 @@ if($hassubscription.ContainsKey($selsubs))
                                             "ApplicationInsightsAgent_EXTENSION_VERSION" = "~2";
                                             "DiagnosticServices_EXTENSION_VERSION" = "~3";
                                             "InstrumentationEngine_EXTENSION_VERSION" = "disabled";
+                                            "EnableMI" = "true";
+                                            "KeyVault" = $keyvaultmappingtool.VaultUri;
                                             "SnapshotDebugger_EXTENSION_VERSION" = "disabled";
-                                            "MappingToolAppID" = $kvMappingToolAppID.Id;
-                                            "MappingToolAppSecret" = $kvMappingToolAppSecret.Id;
-                                            "MappingToolTenantID" = $kvMappingToolTenantID.Id;
-                                            "MappingToolSubscriptionID"=$kvMappingToolSubscriptionID.Id;
-                                            "KeyVaultStorageKey"=$kvsecretstrconnstr.Id}
+                                            "MappingToolAppID" = $kvMappingToolAppID.Name;
+                                            "MappingToolAppSecret" = $kvMappingToolAppSecret.Name;
+                                            "MappingToolTenantID" = $kvMappingToolTenantID.Name;
+                                            "MappingToolSubscriptionID"=$kvMappingToolSubscriptionID.Name;
+                                            "KeyVaultStorageKey"=$kvsecretstrconnstr.Name}
 
                                 $webappsettings = Set-AzWebApp -Name $webapp.Name `
                                                             -AppSettings $AppSettings `
