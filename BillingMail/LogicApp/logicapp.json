@@ -1,0 +1,374 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionid": {
+            "type": "String"
+        },
+        "logicappname": {
+            "defaultValue": "lbillingapp",
+            "type": "String"
+        },
+        "functionname": {
+            "defaultValue": "fbillingapp",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('logicappname')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "Recurrence": {
+                            "recurrence": {
+                                "frequency": "Month",
+                                "interval": 1,
+                                "schedule": {
+                                    "monthDays": [
+                                        1
+                                    ]
+                                },
+                                "timeZone": "W. Europe Standard Time"
+                            },
+                            "type": "Recurrence"
+                        }
+                    },
+                    "actions": {
+                        "Condition_HTTP_Get_success": {
+                            "actions": {
+                                "For_each": {
+                                    "foreach": "@body('HTTP_Get_Assigned_Subscriptions')?['value']",
+                                    "actions": {
+                                        "Condition_HTTP_Post_success": {
+                                            "actions": {
+                                                "Create_HTML_table": {
+                                                    "runAfter": {
+                                                        "HttpTrigger_Azure_Function": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Table",
+                                                    "inputs": {
+                                                        "columns": [
+                                                            {
+                                                                "header": "@variables('GroupingTag')",
+                                                                "value": "@item()?['CostCenter']"
+                                                            },
+                                                            {
+                                                                "header": "Cost",
+                                                                "value": "@item()?['Cost']"
+                                                            }
+                                                        ],
+                                                        "format": "HTML",
+                                                        "from": "@body('HttpTrigger_Azure_Function')"
+                                                    }
+                                                },
+                                                "Get_blob_content": {
+                                                    "runAfter": {
+                                                        "Create_HTML_table": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "metadata": {
+                                                        "JTJmYmlsbGluZ2RhdGElMmZUZXN0MTIzNC5jc3Y=": "/billingdata/Test1234.csv"
+                                                    },
+                                                    "type": "ApiConnection",
+                                                    "inputs": {
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azureblob']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "get",
+                                                        "path": "/datasets/default/files/@{encodeURIComponent(encodeURIComponent('/billingdata/',variables('ExportFilename')))}/content",
+                                                        "queries": {
+                                                            "inferContentType": true
+                                                        }
+                                                    }
+                                                },
+                                                "HttpTrigger_Azure_Function": {
+                                                    "runAfter": {},
+                                                    "type": "Function",
+                                                    "inputs": {
+                                                        "body": {
+                                                            "Data": "@body('HTTP_Post_Azure_Billing_API')",
+                                                            "Filename": "@variables('ExportFilename')"
+                                                        },
+                                                        "function": {
+                                                            "id": "[concat('/subscriptions/',parameters('subscriptionid'),'/resourceGroups/',resourceGroup().name ,'/providers/Microsoft.Web/sites/',parameters('functionname'),'/functions/HttpTrigger')]"
+                                                        },
+                                                        "headers": {
+                                                            "Content-Type": "application/json"
+                                                        }
+                                                    }
+                                                },
+                                                "Send_an_email": {
+                                                    "runAfter": {
+                                                        "Get_blob_content": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ApiConnection",
+                                                    "inputs": {
+                                                        "body": {
+                                                            "Attachments": [
+                                                                {
+                                                                    "ContentBytes": "@{base64(body('Get_blob_content'))}",
+                                                                    "Name": "@variables('ExportFilename')"
+                                                                }
+                                                            ],
+                                                            "Body": "<p><strong>Dear Ladies and Gentlemen,</strong><br>\n<br>\nThis mail contains the current cost of the subscription:<br>\nID: @{variables('CurrentSubscriptionID')}<br>\nName: @{variables('CurrentSubscriptionName')}<br>\n<br>\n@{body('Create_HTML_table')}<br>\nAttached, you will also find a detailed list of the current costs.<br>\n<br>\nWith best regards,<br>\nYour IT<br>\n<br>\n<br>\n<br>\n</p>",
+                                                            "Subject": "Billing for subscription '@{variables('CurrentSubscriptionName')}'",
+                                                            "To": "johannes.lagler-gruener@acp.at"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['office365']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "post",
+                                                        "path": "/v2/Mail"
+                                                    }
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "HTTP_Post_Azure_Billing_API": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "expression": {
+                                                "and": [
+                                                    {
+                                                        "equals": [
+                                                            "@outputs('HTTP_Post_Azure_Billing_API')['statusCode']",
+                                                            200
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            "type": "If"
+                                        },
+                                        "HTTP_Post_Azure_Billing_API": {
+                                            "runAfter": {
+                                                "Set_variable_ExportFilename": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Http",
+                                            "inputs": {
+                                                "authentication": {
+                                                    "audience": "https://management.azure.com",
+                                                    "type": "ManagedServiceIdentity"
+                                                },
+                                                "body": {
+                                                    "dataset": {
+                                                        "aggregation": {
+                                                            "totalCost": {
+                                                                "function": "Sum",
+                                                                "name": "Cost"
+                                                            }
+                                                        },
+                                                        "granularity": "Monthly",
+                                                        "grouping": [
+                                                            {
+                                                                "name": "@variables('GroupingTag')",
+                                                                "type": "TagKey"
+                                                            },
+                                                            {
+                                                                "name": "ResourceGroupName",
+                                                                "type": "Dimension"
+                                                            }
+                                                        ],
+                                                        "sorting": [
+                                                            {
+                                                                "direction": "ascending",
+                                                                "name": "BillingMonth"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "timeframe": "TheLastMonth",
+                                                    "type": "ActualCost"
+                                                },
+                                                "headers": {
+                                                    "Content-Type": "application/json"
+                                                },
+                                                "method": "POST",
+                                                "uri": "https://management.azure.com/subscriptions/@{variables('CurrentSubscriptionID')}/providers/Microsoft.CostManagement/query?api-version=2019-11-01"
+                                            }
+                                        },
+                                        "Set_variable_CurrentSubscriptionID": {
+                                            "runAfter": {},
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "CurrentSubscriptionID",
+                                                "value": "@{items('For_each')?['subscriptionId']}"
+                                            }
+                                        },
+                                        "Set_variable_CurrentSubscriptionName": {
+                                            "runAfter": {
+                                                "Set_variable_CurrentSubscriptionID": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "CurrentSubscriptionName",
+                                                "value": "@{items('For_each')?['displayName']}"
+                                            }
+                                        },
+                                        "Set_variable_ExportFilename": {
+                                            "runAfter": {
+                                                "Set_variable_CurrentSubscriptionName": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "ExportFilename",
+                                                "value": "ExportSubscription@{variables('CurrentSubscriptionID')}.csv"
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {},
+                                    "type": "Foreach",
+                                    "runtimeConfiguration": {
+                                        "concurrency": {
+                                            "repetitions": 1
+                                        }
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "HTTP_Get_Assigned_Subscriptions": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@outputs('HTTP_Get_Assigned_Subscriptions')['statusCode']",
+                                            200
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        },
+                        "HTTP_Get_Assigned_Subscriptions": {
+                            "runAfter": {
+                                "Initialize_variable_CurrentSubscriptionName": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Http",
+                            "inputs": {
+                                "authentication": {
+                                    "audience": "https://management.azure.com",
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "headers": {
+                                    "Content-Type": "application/json"
+                                },
+                                "method": "GET",
+                                "uri": "https://management.azure.com/subscriptions?api-version=2019-06-01"
+                            }
+                        },
+                        "Initialize_variable_CurrentSubscriptionID": {
+                            "runAfter": {
+                                "Set_Grouping_Tag_Variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "CurrentSubscriptionID",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_CurrentSubscriptionName": {
+                            "runAfter": {
+                                "Initialize_variable_Export_Filename": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "CurrentSubscriptionName",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_Export_Filename": {
+                            "runAfter": {
+                                "Initialize_variable_CurrentSubscriptionID": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "ExportFilename",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        },
+                        "Set_Grouping_Tag_Variable": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "GroupingTag",
+                                        "type": "string",
+                                        "value": "CostCenter"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "azureblob": {
+                                "connectionId": "[concat('/subscriptions/',parameters('subscriptionid'),'/resourceGroups/',resourceGroup().name ,'/providers/Microsoft.Web/connections/azureblob')]",
+                                "connectionName": "azureblob",
+                                "id": "[concat('/subscriptions/',parameters('subscriptionid'),'/providers/Microsoft.Web/locations/',resourceGroup().location,'/managedApis/azureblob')]"
+                            },
+                            "office365": {
+                                "connectionId": "[concat('/subscriptions/',parameters('subscriptionid'),'/resourceGroups/',resourceGroup().name ,'/providers/Microsoft.Web/connections/office365')]",
+                                "connectionName": "office365",
+                                "id": "[concat('/subscriptions/',parameters('subscriptionid'),'/providers/Microsoft.Web/locations/',resourceGroup().location,'/managedApis/office365')]"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

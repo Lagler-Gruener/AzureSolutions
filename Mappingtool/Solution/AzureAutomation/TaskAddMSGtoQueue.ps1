@@ -733,9 +733,9 @@ function CallRBCreateAADGroup()
                             $AADaction = $i.value[0].tolower()
                             $AADInitiatedBy = $i.value[3].tostring()
 
-                            if(($AADGroupName.StartWith($global:NSAADPerm.tolower())) -or 
-                               ($AADGroupName.StartWith($global:NSAADRBACPerm.tolower())) -or
-                               ($AADGroupName.StartWith($global:NSAADRoleWithRolePerm.tolower())))
+                            if(($AADGroupName.StartsWith($global:NSAADPerm.tolower())) -or 
+                               ($AADGroupName.StartsWith($global:NSAADRBACPerm.tolower())) -or
+                               ($AADGroupName.StartsWith($global:NSAADRoleWithRolePerm.tolower())))
                             {
 
                                 Write-Output "Azure AD group webhook."

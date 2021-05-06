@@ -1,0 +1,40 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionid": {
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "azureblob",
+            "location": "westeurope",
+            "kind": "V1",
+            "properties": {
+                "displayName": "straccbilling",
+                "customParameterValues": {},
+                "api": {
+                    "id": "[concat('/subscriptions/',parameters('subscriptionid'),'/providers/Microsoft.Web/locations/westeurope/managedApis/azureblob')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "office365",
+            "location": "westeurope",
+            "kind": "V1",
+            "properties": {
+                "displayName": "hannes@gruener.eu.org",
+                "customParameterValues": {},
+                "api": {
+                    "id": "[concat('/subscriptions/',parameters('subscriptionid'),'/providers/Microsoft.Web/locations/westeurope/managedApis/office365')]"
+                }
+            }
+        }
+    ]
+}
