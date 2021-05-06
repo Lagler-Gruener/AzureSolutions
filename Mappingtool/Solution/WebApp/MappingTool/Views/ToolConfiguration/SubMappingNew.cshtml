@@ -1,0 +1,54 @@
+﻿
+@{
+    ViewBag.Title = "New";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+<div class="jumbotron MTHeaderStyle">
+    <h1>New configuration</h1>
+    <p class="lead">In that section each admin can add a new subscription configuration to the Azure storage table.</p>
+</div>
+
+
+@using (Html.BeginForm("SubMappingSaveNewConfig", "ToolConfiguration", FormMethod.Post))
+{
+<center>
+    <div class="MTGridSizeMedium">
+        <div style="text-align:right">
+            @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+        </div>
+        <div class="well MTGridHeader">
+            <div class="form-inline MTGridInner">
+                <div class="form-group" style="padding-right:10px">
+                    <h4>New mapping</h4>
+                </div>
+                <div class="form-group MTGridInnerButtonright">
+                    <input type="submit" value="Save" class="btn btn-success" />
+                </div>
+            </div>
+        </div>
+        <div style="padding-top:20px">
+            <table id="t01" style="width:100%">
+                <tr>
+                    <th>SubscriptionID</th>
+                    <th>Mapping</th>
+                </tr>
+                <tr>
+                    <td>
+                        @Html.Editor("TextBoxSubscriptionID")
+                    </td>
+                    <td>
+                        @Html.Editor("TextBoxMapping")
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="text-align:left">
+            @Html.ActionLink("< Back to List", "Subscriptions", null, new { @class = "btn btn-outline-success" })
+        </div>
+    </div>
+</center>
+}

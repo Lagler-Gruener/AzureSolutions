@@ -1,0 +1,38 @@
+﻿
+<div class="jumbotron MTHeaderStyle">
+    <h1>RBAC markes as delete</h1>
+    <p class="lead">
+        In that section, you can find all ResourceGroup RBAC permissions which are marked as delete. <br />
+        You have two options: <br />
+        <ul>
+            <li>Restore</li>
+            <li>Delete</li>
+        </ul>
+        The delete function will rename the Azure AD permission group, remove the RBAC Resource group binding <br />
+        and archive the On-Prem Active Directory group aswell the configuration settings.
+    </p>
+</div>
+
+@using (Html.BeginForm())
+{
+
+    <center>
+        <div class="MTGridSizeFull">
+            <div style="text-align:right">
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-inline MTGridInner">
+                    <div class="form-group" style="padding-right:10px">
+                        <h4>Marked as delete RBAC permissions</h4>
+                    </div>
+                </div>
+            </div>
+            <div style="padding-top:20px">
+                @Html.MVCGrid("RBACMarkedAsDelete")
+            </div>
+        </div>
+    </center>
+}
+
+

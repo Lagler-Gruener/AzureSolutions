@@ -1,0 +1,192 @@
+﻿
+@{
+    ViewBag.Title = "Architecture";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron HeaderStyle">
+    <h1>Mappingtool architecture</h1>
+    <p class="lead">
+        Here you can see a high level architecture design about the application
+    </p>
+</div>
+
+<hr />
+
+<div>
+    <h2>Architecture</h2>
+    <img src="~/Content/Images/Architecture.png" />
+    <p></p>
+    <h2>Data Flow</h2>
+    <table>
+        <tr>
+            <td style="vertical-align:top"><b style="color:gray">__________</b> &nbsp;</td>
+            <td>
+                <p>
+                    The product itselve is an OpernSource based project and the whole source code <br />
+                    is stored in Github. For the implementation, there are many automated steps available <br />
+                    but a few steps are manually one.<br />
+                    For future updates, there is the possibility to define the Source Control in Azure automation <br />
+                    and the updates will be automatically installed from Github.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align:top"><b style="color:black">__________</b> &nbsp;</td>
+            <td>
+                Azure AD authentication for web frontend. <br />
+                The webapp need an Azure APP including the following API permissions: <p></p>
+                <ul>
+                    <li>User.Read</li>
+                    <li>User.Read.All</li>
+                    <li>Group.ReadWrite.All</li>
+                </ul>
+                <p>
+                    The authentication level also need an Application secret. The livetime recomendation here <br />
+                    here is expires every year. Important, when the secret expires, the application will stopped <br />
+                    and you have to update the key in Azure KeyVault!
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align:top"><b style="color:red">__________</b> &nbsp;</td>
+            <td>
+                I've defined two Workflows in that solution named: <br />
+                <ul>
+                    <li>LAMappingTool-Monitor</li>
+                    <li>LAMappingTool-Workflow</li>
+                </ul>
+                which are required to run the Worklows. <br />
+                The architecture is based on SaaS and the componentes which are used are: <br />
+                <p>
+                    <ul>
+                        <li>Azure Logic Apps</li>
+                        <li>Azure Logic-App</li>
+                        <li>Azure Automation API connection</li>
+                        <li>Azure Log Analytics API connection</li>
+                        <li>Azure queue API connection</li>
+                        <li>Azure tables API conenction</li>
+                    </ul>
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align:top">
+                <b style="color:violet">__________</b><br />
+            </td>
+            <td>
+                <p>
+                    Each script and Worklfow write it's state into Azure Log Analytics. <br />
+                    This is a highly important feature, because you can use Azure Log Analytics <br />
+                    the view the workflow state and also for throubleshooting and Monitoring.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align:top"><b style="color:green">__________</b> &nbsp;</td>
+            <td>
+                <p>
+                    I've implement two Azure EventGrids on Subscription level to archive the following:
+                </p>
+                <p>
+                    <ul>
+                        <li>
+                            Microsoft.Resources/subscriptions/resourceGroups/write <br />
+                            The Grid is starting based on Naming schema: 'RG-'
+                        </li>
+                        <li>
+                            Microsoft.Resources/tags/write <br />
+                            Everytime when a tag was changed the Grid will be executed.
+                        </li>
+                        <li>
+                            Microsoft.Resources/subscriptions/resourcegroups/delete <br />
+                            The Grid is starting based on Naming schema: 'RG-'
+                        </li>
+                    </ul>
+                    Important, the solution isn't an multi tenant application, but it's possible to <br />
+                    add multi subscriptions into the monitoring and workflow, if you need this option, <br />
+                    please take a look to the documentation.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align:top">
+                <b style="color:orange">__________</b> &nbsp;
+            </td>
+            <td>
+                <p>
+                    The sultion also had a web frontend for different administrative tasks. <br />
+                    The web frontend is written in ASP .Net C# and use the MVC model.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align:top">
+                <b style="color:blue">__________</b> &nbsp;
+            </td>
+            <td>
+                The solution is based on Hybrid-Cloud. The automation solution is Azure Automation <br />
+                and I'm using the hybrid worker group funktionality to execute scripts On-Prem <br />
+                based on schedule. <br />
+                To get more information about the workflows please take a look to the <a href="~/Views/Home/Workflows.cshtml" target="_blank">Workflow setion</a>.
+            </td>
+        </tr>
+    </table>
+
+    <p></p>
+    <h2>Components</h2>
+    <p></p>
+    <h3>Azure Blob Storage</h3>
+    <p>
+        <a href="https://azure.microsoft.com/en-us/services/storage/blobs/" target="_blank">Azure Blob storage</a> is a REST-based object storage for data that <br />
+        are required for that solution. On that blob storage there is a container named "sources" available, where new module version will be temporary stored.
+    </p>
+    <h3>Azure Queue Storage</h3>
+    <p>
+        <a href="https://azure.microsoft.com/de-de/services/storage/queues/" target="_blank">Azure Queue Storage</a> helps to make your application scalable and <br />
+        less sensitive to individual component failure. That's the reason why that component is on of the main component in my solution. <br />
+        Each commuication between Azure and On-Prem are based on Queue messages. To get more information about the workflows, switch to the <a href="~/Views/Home/Workflows.cshtml" target="_blank">Workflow setion</a>.
+    </p>
+    <h3>Azure Automation</h3>
+    <p>
+        <a href="https://azure.microsoft.com/en-us/services/automation/" target="_blank">Azure Automation</a> is the central automation engine for that solution. <br />
+        The scripting language for that solution is PowerShell. I've created different Azure Automation Runbooks for the different workflows. Some Workflows are <br />
+        running in Azure and some are running On-Prem but the main administration is in Azure and Azure Automation.
+    </p>
+    <h3>Azure Key Vault</h3>
+    <p>
+        <a href="https://azure.microsoft.com/en-us/services/key-vault/" target="_blank">Azure KeyVault</a> is the main secure store for the whole solution. <br />
+        The automation engine, and also the Web frontend need Azure KeyVault to get the required Variables/Connection String and Password for a successfull execution.
+    </p>
+    <h3>Azure Web App</h3>
+    <p>
+        The solution also builds a standard web app in <a href="https://docs.microsoft.com/en-us/azure/app-service/" target="_blank">Azure App Services </a> for the <br />
+        administrative and to view (future) monitoring and workflow results.
+    </p>
+    <h3>Azure App Insight</h3>
+    <p>
+        Each component in that solution are monitored. To monitor Azure App Services, I use <a href="https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview" target="_blank">Azure Application Insights</a>, which is the right tool for PaaS <br />
+        monitoring and also for my solution.
+    </p>
+    <h3>Azure LogicApp</h3>
+    <p>
+        The main workflow engine for that solution is <a href="https://azure.microsoft.com/en-us/services/logic-apps/" target="_blank">Azure Logic App</a>.
+    </p>
+    <h3>Azure Log Analytics</h3>
+    <p>
+        <a href="https://docs.microsoft.com/en-us/azure/azure-monitor/log-query/log-analytics-tutorial" target="_blank">Azure Log Analytics</a> is the main logging store for that solution and also the main entry point for the application and workflow monitoring.
+    </p>
+    <h3>Azure Workbooks</h3>
+    <p>
+        To get a visual interface for the logging data, I use <a href="https://docs.microsoft.com/en-us/azure/azure-monitor/platform/workbooks-overview" target="_blank">Workbooks</a> in my solution.
+    </p>
+    <h3>Azure Monitor</h3>
+    <p>
+        For alerting scenarios like E-Mail od maybe SMS notifiation I use <a href="https://docs.microsoft.com/en-us/azure/azure-monitor/" target="_blank">Azure Monitor</a> in my solution.
+    </p>
+    <h3>Azure EventGrid</h3>
+    <p>
+        Finally it's important to execute an workflow based on different actions. To archive that, I've implemented <a href="https://azure.microsoft.com/en-us/services/event-grid/" target="_blank2>Azure Event Grid</a> to handle thoose events.
+    </p>
+</div>
+
