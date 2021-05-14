@@ -62,6 +62,7 @@ try {
 
     $context = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile.DefaultContext
     $aadToken = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($context.Account, $context.Environment, $context.Tenant.Id.ToString(), $null, [Microsoft.Azure.Commands.Common.Authentication.ShowDialog]::Never, $null, "https://graph.windows.net").AccessToken
+    $Token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($context.Account, $context.Environment, $context.Tenant.Id.ToString(), $null, [Microsoft.Azure.Commands.Common.Authentication.ShowDialog]::Never, $null, "https://management.core.windows.net/").AccessToken
     
         Connect-AzureAD -AadAccessToken $aadToken `
                         -AccountId $context.Account.Id `
@@ -178,6 +179,8 @@ if($hassubscription.ContainsKey($selsubs))
         #endregion
 
         #region create azure service principal
+
+            #In some cases the permission assignment returned an error. Please assign the permission to the subscription and AAD role manually
             
             Write-Output "- Deploy azure service principal SP-$($ToolName)-$($ToolNameSuffix)"
             try {                       
@@ -186,27 +189,22 @@ if($hassubscription.ContainsKey($selsubs))
                 $sppw = Get-RandomCharacters -length 35 -characters abcdefghiklmnoprstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-+!-#*
             
                 $spcredentials = New-Object -TypeName Microsoft.Azure.Commands.ActiveDirectory.PSADPasswordCredential `
-                                            -Property @{StartDate = Get-Date; EndDate=Get-Date -Year 2124; Password=$sppw}
+                                            -Property @{StartDate = Get-Date; EndDate=Get-Date -Year 2124; Password=$sppw} `
+                                            -ErrorAction Stop
         
-                $spcreateerror = ""
                 $sp = New-AzADServicePrincipal -DisplayName "SP-$($ToolName)-$($ToolNameSuffix)" `
-                                                -PasswordCredential $spcredentials `
-                                                -ErrorAction SilentlyContinue
-
-                if($null -eq $sp)
-                {
-                    throw "Error sp not deployed! Script stopped Error: $spcreateerror"
-                }
-
+                                               -PasswordCredential $spcredentials `
+                                               -ErrorAction Stop
+                Write-Output $sp
                 Write-Output "DONE"
                 Write-Output " "
 
-                Write-Output "Assign owner permission to subscription $selectedsubscription"
+                Write-Output "Assign owner permission to subscription $selectedsubscription"                
 
                     $id = $sp.ApplicationId
                     $ownerassigment = New-AzRoleAssignment -ApplicationId $id `
                                                            -RoleDefinitionName Owner `
-                                                           -Scope "/subscriptions/$selectedsubscription"
+                                                           -Scope "/subscriptions/$selectedsubscription"                                                           
 
                 Write-Output "DONE"
                 Write-Output " "
@@ -261,12 +259,8 @@ if($hassubscription.ContainsKey($selsubs))
                                                         
                     $keyvaultmappingtool = New-AzKeyVault -Name "$($ToolName)KeyV$($ToolNameSuffix)" `
                                                           -ResourceGroupName $deploymentrg.ResourceGroupName `
-                                                          -Location $AppLocation
-                    
-                    if($null -eq $keyvaultmappingtool)
-                    {
-                        throw "Error keyvault not deployed! Script stopped"
-                    }                    
+                                                          -Location $AppLocation `
+                                                          -ErrorAction Stop                             
 
                     Write-Output "DONE"
                     Write-Output " "
@@ -337,12 +331,11 @@ if($hassubscription.ContainsKey($selsubs))
 
                 Write-Output "- Deploy azure loganalytics $($ToolName)LogA$($ToolNameSuffix)"
                 try {                                                  
-                    $Workspace = New-AzOperationalInsightsWorkspace -Location $AppLocation -Name "$($ToolName)LogA$($ToolNameSuffix)" -Sku Standard -ResourceGroupName $deploymentrg.ResourceGroupName
-
-                    if($null -eq $Workspace)
-                    {
-                        throw "Error storage account not deployed! Script stopped"
-                    }
+                    $Workspace = New-AzOperationalInsightsWorkspace -Location $AppLocation `
+                                                                    -Name "$($ToolName)LogA$($ToolNameSuffix)" `
+                                                                    -Sku Standard `
+                                                                    -ResourceGroupName $deploymentrg.ResourceGroupName `
+                                                                    -ErrorAction Stop
 
                     $kvkey = (Get-AzOperationalInsightsWorkspaceSharedKey -ResourceGroupName $deploymentrg.ResourceGroupName -Name $Workspace.Name).PrimarySharedKey
 
@@ -364,12 +357,8 @@ if($hassubscription.ContainsKey($selsubs))
                                                        -Name "$($ToolName)AppSvcPlan$($ToolNameSuffix)" `
                                                        -Tier Standard `
                                                        -WorkerSize Small `
-                                                       -NumberofWorkers 1 
-
-                    if($null -eq $appsvcplan)
-                    {
-                        throw "Error app service plan not deployed! Script stopped"
-                    }
+                                                       -NumberofWorkers 1 `
+                                                       -ErrorAction Stop
 
                     Write-Output "DONE"
                     Write-Output " "
@@ -379,7 +368,8 @@ if($hassubscription.ContainsKey($selsubs))
                     $webapp = New-AzWebApp -ResourceGroupName $deploymentrg.ResourceGroupName `
                                            -Location $AppLocation `
                                            -AppServicePlan $appsvcplan.Name `
-                                           -Name "$($ToolName)Admintool$($ToolNameSuffix)"
+                                           -Name "$($ToolName)Admintool$($ToolNameSuffix)" `
+                                           -ErrorAction Stop
                     
                     if($null -eq $webapp)
                     {
@@ -402,7 +392,8 @@ if($hassubscription.ContainsKey($selsubs))
 
                 $appinsight = New-AzApplicationInsights -ResourceGroupName $deploymentrg.ResourceGroupName `
                                                         -Name "$($ToolName)AppInsight$($ToolNameSuffix)" `
-                                                        -location $AppLocation   
+                                                        -location $AppLocation `
+                                                        -ErrorAction Stop
                                                         
                 Write-Output "DONE"
                 Write-Output " "
@@ -412,7 +403,7 @@ if($hassubscription.ContainsKey($selsubs))
                 throw "Error in app insight deployment. Error message $($_.Exception.Message)"      
             }  
 
-        #endregion
+            #endregion
 
     #endregion
 
@@ -437,11 +428,11 @@ if($hassubscription.ContainsKey($selsubs))
                         Write-Output "- Create runas account"
 
                         .\Create-RunAsAccount.ps1 -ResourceGroup $deploymentrg.ResourceGroupName `
-                                                -AutomationAccountName $newautomacc.AutomationAccountName `
-                                                -SubscriptionId $selectedsubscription `
-                                                -ApplicationDisplayName "SP-$($ToolName)-RunasAccount" `
-                                                -SelfSignedCertPlainPassword $sppw `
-                                                -CreateClassicRunAsAccount $false
+                                                  -AutomationAccountName $newautomacc.AutomationAccountName `
+                                                  -SubscriptionId $selectedsubscription `
+                                                  -ApplicationDisplayName "SP-$($ToolName)-RunasAccount" `
+                                                  -SelfSignedCertPlainPassword $sppw `
+                                                  -CreateClassicRunAsAccount $false
                         
                         Write-Output "DONE"
                         Write-Output " "
@@ -1034,8 +1025,7 @@ if($hassubscription.ContainsKey($selsubs))
                                 $schedule = New-AzScheduledQueryRuleSchedule -FrequencyInMinutes 5 -TimeWindowInMinutes 5
                                 $triggerCondition = New-AzScheduledQueryRuleTriggerCondition -ThresholdOperator "GreaterThan" -Threshold 0 
 
-                            #region create add grp add alert             
-                                Write-Output "Create actiongroup appmtaadgrp"
+                                Write-Output "Create actiongroup appmtaada"
 
                                     $webhookaddgroup = New-AzActionGroupReceiver -Name "rcaadgrpadd" `
                                                                                   -WebhookReceiver `
@@ -1043,12 +1033,15 @@ if($hassubscription.ContainsKey($selsubs))
                                                                                   -UseCommonAlertSchema
 
                                     $actgrpaddgrpadd = Set-AzActionGroup -ResourceGroupName $deploymentrg.ResourceGroupName `
-                                                                         -Name "$($ToolName)aadgrpadd" `
-                                                                         -ShortName "appmtgrpadd" `
-                                                                         -Receiver $webhookaddgroup                                                                  
+                                                                         -Name "$($ToolName)-aadactions" `
+                                                                         -ShortName "appmtaada" `
+                                                                         -Receiver $webhookaddgroup  
 
                                 Write-Output "DONE"
                                 Write-Output " " 
+
+                            #region create add grp add alert                                                                                                             
+                                
 
                                 Write-Output "Create alert rule for aad group add"
 
@@ -1059,7 +1052,7 @@ if($hassubscription.ContainsKey($selsubs))
                                                                             | extend userPrincipalName_ = tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)
                                                                             | where Identity <> '$($sp.DisplayName)'
                                                                             | project OperationName, displayName_, id_, userPrincipalName_" `
-                                                                -DataSourceId $Workspace.ResourceId
+                                                                            -DataSourceId $Workspace.ResourceId
 
                                                         
                                     $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $actgrpaddgrpadd.Id 
@@ -1091,7 +1084,7 @@ if($hassubscription.ContainsKey($selsubs))
                                                                                         | project OperationName, displayName_, id_, userPrincipalName_" `
                                                                             -DataSourceId $Workspace.ResourceId
 
-                                    $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $webhookaddgroup.Id 
+                                    $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $actgrpaddgrpadd.Id 
 
                                     $alertingAction = New-AzScheduledQueryRuleAlertingAction -AznsAction $aznsActionGroup -Severity "0" -Trigger $triggerCondition
 
@@ -1122,7 +1115,7 @@ if($hassubscription.ContainsKey($selsubs))
                                                                                         | project OperationName, displayName_, id_, userPrincipalName_" `
                                                                             -DataSourceId $Workspace.ResourceId
 
-                                    $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $webhookaddgroup.Id 
+                                    $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $actgrpaddgrpadd.Id 
 
                                     $alertingAction = New-AzScheduledQueryRuleAlertingAction -AznsAction $aznsActionGroup -Severity "0" -Trigger $triggerCondition
 
@@ -1168,8 +1161,8 @@ if($hassubscription.ContainsKey($selsubs))
                                                                            -EndpointType webhook `
                                                                            -Endpoint $($rgwebhook.WebhookURI) `
                                                                            -IncludedEventType $includedEventTypes `
-                                                                           -AdvancedFilter @($AdvFilter1) `
-                                                                           -ResourceGroupName $($deploymentrg.ResourceGroupName)
+                                                                           -AdvancedFilter @($AdvFilter1)
+
                             
                         Write-Output "DONE"
                         Write-Output " "                                          
@@ -1184,8 +1177,7 @@ if($hassubscription.ContainsKey($selsubs))
                                                                               -EndpointType webhook `
                                                                               -Endpoint $($rgdelwebhook.WebhookURI) `
                                                                               -IncludedEventType $includedEventTypes `
-                                                                              -AdvancedFilter @($AdvFilter1) `
-                                                                              -ResourceGroupName $($deploymentrg.ResourceGroupName)
+                                                                              -AdvancedFilter @($AdvFilter1)
                         Write-Output "DONE"
                         Write-Output " " 
                     }
@@ -1235,7 +1227,7 @@ $body = @"
 "@
 
 $headers = @{
-    "Authorization" = "Bearer $token"
+    "Authorization" = "Bearer $Token"
     "Content-Type"  = "application/json"
 }
 $response = Invoke-WebRequest -Method Put -Uri $uri -Body $body -Headers $headers
@@ -1303,17 +1295,17 @@ catch {
     elseif (($rollback -eq "yes") -or ($rollback -eq "")) {
         Write-Output "Rollback configuration"
 
-        Remove-AzResourceGroup -Name $deploymentrg.ResourceGroupName -Force
+        Remove-AzResourceGroup -Name $deploymentrg.ResourceGroupName -Force -ErrorAction Continue
 
         Write-Output "Please open the Azure Cloudshell and execute tho following command:"
         Write-Output " "
         Write-Output "az keyvault purge --name $($keyvaultmappingtool.VaultName) --location '$($AppLocation)' --no-wait --subscription $($selectedsubscription)"
 
-        Remove-AzADServicePrincipal -ObjectId $sp.Id -Force
-        Remove-AzADServicePrincipal -DisplayName "SP-$($ToolName)-RunasAccount" -Force
+        Remove-AzADServicePrincipal -ObjectId $sp.Id -Force -ErrorAction Continue
+        Remove-AzADServicePrincipal -DisplayName "SP-$($ToolName)-RunasAccount" -Force -ErrorAction Continue
 
-        Remove-AzEventGridSubscription -EventSubscriptionName $rgeventsubrgadd.EventSubscriptionName
-        Remove-AzEventGridSubscription -EventSubscriptionName $rgeventsubrgdelete.EventSubscriptionName
+        Remove-AzEventGridSubscription -EventSubscriptionName $rgeventsubrgadd.EventSubscriptionName -ErrorAction Continue
+        Remove-AzEventGridSubscription -EventSubscriptionName $rgeventsubrgdelete.EventSubscriptionName -ErrorAction Continue
 
         Write-Output "-----------------------------------------------------------------------"
         Write-Output "                                                                       "
