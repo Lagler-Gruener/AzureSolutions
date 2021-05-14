@@ -1025,8 +1025,7 @@ if($hassubscription.ContainsKey($selsubs))
                                 $schedule = New-AzScheduledQueryRuleSchedule -FrequencyInMinutes 5 -TimeWindowInMinutes 5
                                 $triggerCondition = New-AzScheduledQueryRuleTriggerCondition -ThresholdOperator "GreaterThan" -Threshold 0 
 
-                            #region create add grp add alert             
-                                Write-Output "Create actiongroup appmtaadgrp"
+                                Write-Output "Create actiongroup appmtaada"
 
                                     $webhookaddgroup = New-AzActionGroupReceiver -Name "rcaadgrpadd" `
                                                                                   -WebhookReceiver `
@@ -1034,12 +1033,15 @@ if($hassubscription.ContainsKey($selsubs))
                                                                                   -UseCommonAlertSchema
 
                                     $actgrpaddgrpadd = Set-AzActionGroup -ResourceGroupName $deploymentrg.ResourceGroupName `
-                                                                         -Name "$($ToolName)aadgrpadd" `
-                                                                         -ShortName "appmtgrpadd" `
-                                                                         -Receiver $webhookaddgroup                                                                  
+                                                                         -Name "$($ToolName)-aadactions" `
+                                                                         -ShortName "appmtaada" `
+                                                                         -Receiver $webhookaddgroup  
 
                                 Write-Output "DONE"
                                 Write-Output " " 
+
+                            #region create add grp add alert                                                                                                             
+                                
 
                                 Write-Output "Create alert rule for aad group add"
 
@@ -1050,7 +1052,7 @@ if($hassubscription.ContainsKey($selsubs))
                                                                             | extend userPrincipalName_ = tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)
                                                                             | where Identity <> '$($sp.DisplayName)'
                                                                             | project OperationName, displayName_, id_, userPrincipalName_" `
-                                                                -DataSourceId $Workspace.ResourceId
+                                                                            -DataSourceId $Workspace.ResourceId
 
                                                         
                                     $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $actgrpaddgrpadd.Id 
@@ -1082,7 +1084,7 @@ if($hassubscription.ContainsKey($selsubs))
                                                                                         | project OperationName, displayName_, id_, userPrincipalName_" `
                                                                             -DataSourceId $Workspace.ResourceId
 
-                                    $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $webhookaddgroup.Id 
+                                    $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $actgrpaddgrpadd.Id 
 
                                     $alertingAction = New-AzScheduledQueryRuleAlertingAction -AznsAction $aznsActionGroup -Severity "0" -Trigger $triggerCondition
 
@@ -1113,7 +1115,7 @@ if($hassubscription.ContainsKey($selsubs))
                                                                                         | project OperationName, displayName_, id_, userPrincipalName_" `
                                                                             -DataSourceId $Workspace.ResourceId
 
-                                    $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $webhookaddgroup.Id 
+                                    $aznsActionGroup = New-AzScheduledQueryRuleAznsActionGroup -ActionGroup $actgrpaddgrpadd.Id 
 
                                     $alertingAction = New-AzScheduledQueryRuleAlertingAction -AznsAction $aznsActionGroup -Severity "0" -Trigger $triggerCondition
 
