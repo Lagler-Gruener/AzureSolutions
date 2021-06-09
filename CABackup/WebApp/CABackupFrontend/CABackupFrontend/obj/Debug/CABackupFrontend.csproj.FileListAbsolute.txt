@@ -1,0 +1,1 @@
+C:\GitHub\Private\AzureSolutions\CABackup\WebApp\CABackupFrontend\CABackupFrontend\bin\roslyn\Microsoft.CodeAnalysis.CSharp.dll

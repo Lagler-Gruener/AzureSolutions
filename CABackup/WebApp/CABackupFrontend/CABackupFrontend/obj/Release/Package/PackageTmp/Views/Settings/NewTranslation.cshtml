@@ -1,0 +1,107 @@
+﻿@model CABackupFrontend.Models.listcabackuptranslation
+
+@{
+    ViewBag.Title = "Conditional access policy backups";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron">
+    <h1>New translation setting</h1>
+    <p>The translation settings are important for restore tasks of type 'CABackupChanges'!</p>
+    <p>This is because there is an incorrect translation in some sections and the recovery task cannot interpret them.</p>
+    <p>Here a short sample:</p>
+    <p>
+        When the OnChange task writes the configuration to the table there is a <b>Section</b> named 'sessionControls'. <br />
+        That control includes the <b>Function</b> named 'cloudAppSecurity'<br />
+        and in that section, there is a <b>Setting</b> named 'cloudAppSecurityType'.<br />
+        Normally the value of that setting can be 'mcasConfigured/monitorOnly/blockDownloads' but the OnChange task <br />
+        returns the value '1/2/3'
+    </p>
+    <p><b>Keep in mind</b>, only change the settings in the admin portal!</p>
+</div>
+
+<hr />
+
+@using (Html.BeginForm("SaveNewTranslation", "Settings", FormMethod.Post))
+{
+    <div class="form-group">
+        <h4 class="filterheaderstyle">New translation setting:</h4>
+    </div>
+
+
+    <table>
+        <tr>
+            <td>
+                @Html.LabelFor(model => model.Section, htmlAttributes: new { @class = "control-label col-md-2" })
+            </td>
+            <td>
+                @Html.EditorFor(model => model.Section, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Section, "", new { @class = "text-danger" })
+            </td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>
+                @Html.LabelFor(model => model.Function, htmlAttributes: new { @class = "control-label col-md-2" })
+            </td>
+            <td>
+                @Html.EditorFor(model => model.Function, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Function, "", new { @class = "text-danger" })
+            </td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>
+                @Html.LabelFor(model => model.Setting, htmlAttributes: new { @class = "control-label col-md-2" })
+            </td>
+            <td>
+                @Html.EditorFor(model => model.Setting, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Setting, "", new { @class = "text-danger" })
+            </td>
+            <td></td>
+
+        </tr>
+        <tr>
+            <td>
+                @Html.LabelFor(model => model.RowKey, "Value", htmlAttributes: new { @class = "control-label col-md-2" })
+            </td>
+            <td>
+                @Html.EditorFor(model => model.RowKey, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.RowKey, "", new { @class = "text-danger" })
+            </td>
+            <td></td>
+
+        </tr>
+        <tr>
+            <td>
+                @Html.LabelFor(model => model.Translation, htmlAttributes: new { @class = "control-label col-md-2" })
+            </td>
+            <td>
+                @Html.EditorFor(model => model.Translation, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Translation, "", new { @class = "text-danger" })
+            </td>
+            <td style="padding-left:10px">
+                To remove the value use the translation: -removekey-
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <hr />
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td>
+            <td>
+            </td>
+            <td>
+                <input type="submit" value="Save" class="btn btn-success" />
+            </td>
+        </tr>
+    </table>
+
+    <div class="form-group" style="padding-top:15px">
+        <h4 class="filterheaderstyle">&nbsp;</h4>
+    </div>
+
+}

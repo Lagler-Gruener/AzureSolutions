@@ -1,0 +1,77 @@
+﻿@model CABackupFrontend.Models.listrestorevalidation
+
+@{
+    ViewBag.Title = "Conditional access policy backups";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron">
+    <h1>Application settings</h1>
+    <p>In that section, you have different configurations options for the conditional access backup application like:</p>
+    <ul>
+        <li>Enable override existing policy confirmation</li>
+        <li>Define the translation settings</li>
+    </ul>
+    <p><b>Keep in mind</b>, only change the settings in the admin portal!</p>
+</div>
+
+<hr />
+
+<div class="well MTGridHeader">
+    <div class="form-group">
+        <h4 class="filterheaderstyle">Enable restore validation:</h4>
+    </div>
+
+    @using (Html.BeginForm("SaveOverrideValidation", "Settings", FormMethod.Post))
+    {
+        <table border="0">
+            <tr>
+                <td>
+                    <b>Enabled:</b> &nbsp;
+                </td>
+                <td style="padding-left:10px">
+                    @Html.EditorFor(x => x.state)
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>EMail:</b> &nbsp;
+                </td>
+                <td style="padding-left:10px">
+                    @Html.EditorFor(x => x.email, new { htmlAttributes = new { placeholder = "Specify email addresses spearated by semicolons" } })
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                </td>
+                <td style="padding-left:10px">
+                    <input type="submit" value="Save" class="btn btn-success" />
+                </td>
+            </tr>
+        </table>
+    }
+        <div class="form-group" style="padding-top:15px">
+            <h4 class="filterheaderstyle">&nbsp;</h4>
+        </div>
+
+        <hr />
+
+        <div class="form-group">
+            <h4 class="filterheaderstyle">Define translation settings:</h4>
+        </div>
+
+        <div class="form-inline MTGridInner">
+            <div class="form-group" style="padding-left:10px">
+                @Html.ActionLink("New translation", "NewTranslation", "Settings", new { @class = "btn btn-success" })
+            </div>
+        </div>
+
+        @Html.MVCGrid("CABackupsTranslation")
+
+        <div class="form-group" style="padding-top:15px">
+            <h4 class="filterheaderstyle">&nbsp;</h4>
+        </div>
+
+    </div>
+
