@@ -1,0 +1,153 @@
+﻿
+@{
+    ViewBag.Title = "BackupRestore";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron">
+    <h1>Restore backups</h1>
+    <p>Get a detail overview about the available backups and their settings.</p>
+    <p>Depending on the backup type you'll see:</p>
+    <ul>
+        <li>Restorable version</li>
+        <li>New version (only change backup)</li>
+    </ul>
+    <p>The settings in the Conditions, Grant controls and Session controls are displayed in json format.</p>
+</div>
+
+<hr />
+
+<div class="MTGridSizeFull">
+    <div style="text-align:right">
+        @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group" style="padding-right:10px">
+        <h3>Please select the prefered restore option:</h3>
+    </div>
+    <center>
+        <table border="0" width="850px">
+            <tr>
+                <td style="width: 50%">
+                    When you choose the option "Create new policy" the <br />
+                    existing policy will not be overwritten. <br />
+                    The restore task creates a new policy with the <br />
+                    suffix '.restore(Date)'. <br />
+                    <b>Keep in mind</b>, that the state of the restored policy <br />
+                    is always "report only"! <br />
+                    <hr />
+                </td>
+                <td style="padding-left: 20px;vertical-align: bottom">
+                    When you choose the option "Replace existing Policy", <br />
+                    the policy will be overwritten. <br />
+                    <b>Keep in mind</b>, if the policy is deleted bevor, <br />
+                    the task creates a new policy and <br />
+                    use the restore state (disable/enable/report only). <br />
+                    The restored policy has the suffix '.restore(Date)'
+                    &nbsp;
+                    <hr />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    @Html.ActionLink("Create new Policy", "RestoreNewPolicy", "Backups", routeValues: new { partitionkey = @ViewBag.PartitionKey, rowkey = @ViewBag.RowKey }, htmlAttributes: new { @class = "btn btn-success" })
+                </td>
+                <td style="padding-left:20px">
+                    @Html.ActionLink("Replace existing Policy", "RestorePolicy", "Backups", routeValues: new { partitionkey = @ViewBag.PartitionKey, rowkey = @ViewBag.RowKey }, htmlAttributes: new { @class = "btn btn-success" })
+                </td>
+            </tr>
+        </table>
+    </center>
+    <p>
+        &nbsp;
+    </p>
+    <div class="form-group">
+        <h4 class="filterheaderstyle">
+            <button data-toggle="collapse" class="Expandbutton" data-target="#PolicyDetails">
+                > Policy details:
+            </button>
+        </h4>
+    </div>
+    <div id="PolicyDetails" class="collapse">
+        <table style="width:100%">
+            <tr>
+                <td class="TableOldSettingView">
+                    <b>Policy ID:</b>
+                </td>
+                <td class="TableOldSettingView">
+                    @ViewBag.RestorePolicyID
+                </td>
+            </tr>
+            <tr>
+                <td class="TableOldSettingView">
+                    <b>Policy Name:</b>
+                </td>
+                <td class="TableOldSettingView">
+                    @ViewBag.RestorePolicyname
+                </td>
+            </tr>
+            <tr>
+                <td class="TableOldSettingView">
+                    <b>Policy State:</b>
+                </td>
+                <td class="TableOldSettingView">
+                    @ViewBag.RestoreRolicystate
+                </td>
+
+            </tr>
+            <tr>
+                <td colspan="2" class="TableOldSettingView">
+                    <hr />
+                </td>
+            </tr>
+            <tr>
+                <td valign="top" class="TableOldSettingView">
+                    <b>Conditions:</b>
+                </td>
+                <td class="TableOldSettingView">
+                    <pre>@Html.Raw(ViewBag.RestoreJSONConditions)</pre>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" class="TableOldSettingView">
+                    <hr />
+                </td>
+            </tr>
+
+            <tr>
+                <td valign="top" class="TableOldSettingView">
+                    <b>Grant controls:</b>
+                </td>
+                <td class="TableOldSettingView">
+                    <pre>@Html.Raw(ViewBag.RestoreJSONGrantControls)</pre>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" class="TableOldSettingView">
+                    <hr />
+                </td>
+            </tr>
+
+            <tr>
+                <td valign="top" class="TableOldSettingView">
+                    <b>Session controls:</b>
+                </td>
+                <td class="TableOldSettingView">
+                    <pre>@Html.Raw(ViewBag.RestoreJSONSessionControls)</pre>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" class="TableOldSettingView">
+                    <hr />
+                </td>
+            </tr>
+
+        </table>
+    </div>
+    <div class="form-group" style="padding-top:15px">
+        <h4 class="filterheaderstyle">&nbsp;</h4>
+    </div>
+</div>
+

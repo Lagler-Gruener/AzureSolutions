@@ -639,6 +639,8 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\ros
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\roslyn\VBCSCompiler.exe.config
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Antlr3.Runtime.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Core.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Identity.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Security.KeyVault.Secrets.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Storage.Common.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Storage.Queues.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Hyak.Common.dll
@@ -688,6 +690,8 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Mic
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Configuration.Abstractions.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Configuration.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Primitives.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.Extensions.Msal.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Logging.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Tokens.dll
@@ -708,6 +712,7 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Sys
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Memory.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Numerics.Vectors.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Runtime.CompilerServices.Unsafe.dll
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Security.Cryptography.ProtectedData.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Text.Encodings.Web.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Text.Json.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Threading.Tasks.Extensions.dll
@@ -722,6 +727,8 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Sys
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\WebActivatorEx.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\WebGrease.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Core.xml
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Identity.xml
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Security.KeyVault.Secrets.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Storage.Common.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Storage.Queues.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Hyak.Common.xml
@@ -771,6 +778,8 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Mic
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Configuration.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Configuration.Abstractions.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Extensions.Primitives.xml
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.xml
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.Extensions.Msal.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Logging.xml
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.IdentityModel.Tokens.xml
@@ -814,12 +823,3 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Deb
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.csproj.CopyComplete
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.pdb
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Security.KeyVault.Secrets.dll
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Security.KeyVault.Secrets.xml
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Identity.dll
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.dll
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.Extensions.Msal.dll
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\System.Security.Cryptography.ProtectedData.dll
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Azure.Identity.xml
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.xml
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\Microsoft.Identity.Client.Extensions.Msal.xml

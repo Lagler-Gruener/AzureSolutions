@@ -1,0 +1,169 @@
+﻿
+@{
+    ViewBag.Title = "BackupDetails";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron">
+    <h1>Backups details</h1>
+    <p>Get a detail overview about the available backups and their settings.</p>
+    <p>Depending on the backup type you'll see:</p>
+    <ul>
+        <li>Restorable version</li>
+        <li>New version (only change backup)</li>
+    </ul>
+    <p>The settings in the Conditions, Grant controls and Session controls are displayed in json format.</p>
+</div>
+
+<hr />
+
+<div class="MTGridSizeFull">
+    <div style="text-align:right">
+        @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <h4 class="filterheaderstyle">Policy details:</h4>
+    </div>
+    <div class="form-group">
+        <h3>Policy changed by: </h3>
+        <b>@ViewBag.ModifiedBy</b>
+        <hr />
+    </div>
+    <table style="width:100%" border="0">
+        <tr>
+            <td colspan="2">
+                <h4>Restorable version</h4>
+                <hr />
+            </td>
+            <td colspan="2">
+                <h4>New version (only change backup)</h4>
+                <hr />
+            </td>
+        </tr>
+        <tr>
+            <td class="TableOldSettingView">
+                <b>Policy ID:</b>
+            </td>
+            <td class="TableOldSettingView">
+                @ViewBag.RestorePolicyID
+            </td>
+            <td class="TableNewSettingView">
+                <b>Policy ID:</b>
+            </td>
+            <td class="TableNewSettingView">
+                @ViewBag.NewPolicyID
+            </td>
+        </tr>
+        <tr>
+            <td class="TableOldSettingView">
+                <b>Policy Name:</b>
+            </td>
+            <td class="TableOldSettingView">
+                @ViewBag.RestorePolicyname
+            </td>
+            <td class="TableNewSettingView">
+                <b>Policy Name:</b>
+            </td>
+            <td class="TableNewSettingView">
+                @ViewBag.NewPolicyname
+            </td>
+        </tr>
+        <tr>
+            <td class="TableOldSettingView">
+                <b>Policy State:</b>
+            </td>
+            <td class="TableOldSettingView">
+                @ViewBag.RestoreRolicystate
+            </td>
+            <td class="TableNewSettingView">
+                <b>Policy State:</b>
+            </td>
+            <td class="TableNewSettingView">
+                @ViewBag.NewPolicystate
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="TableOldSettingView">
+                <hr />
+            </td>
+            <td colspan="2" class="TableNewSettingView">
+                <hr />
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" class="TableOldSettingView">
+                <b>Conditions:</b>
+            </td>
+            <td class="TableOldSettingView">
+                <pre>@Html.Raw(ViewBag.RestoreJSONConditions)</pre>
+            </td>
+            <td valign="top" class="TableNewSettingView">
+                <b>Conditions:</b>
+            </td>
+            <td class="TableNewSettingView">
+                <pre>@Html.Raw(ViewBag.NewJSONConditions)</pre>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2" class="TableOldSettingView">
+                <hr />
+            </td>
+            <td colspan="2" class="TableNewSettingView">
+                <hr />
+            </td>
+        </tr>
+
+        <tr>
+            <td valign="top" class="TableOldSettingView">
+                <b>Grant controls:</b>
+            </td>
+            <td class="TableOldSettingView">
+                <pre>@Html.Raw(ViewBag.RestoreJSONGrantControls)</pre>
+            </td>
+            <td valign="top" class="TableNewSettingView">
+                <b>Grant controls:</b>
+            </td>
+            <td class="TableNewSettingView">
+                <pre>@Html.Raw(ViewBag.NewJSONGrantControls)</pre>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2" class="TableOldSettingView">
+                <hr />
+            </td>
+            <td colspan="2" class="TableNewSettingView">
+                <hr />
+            </td>
+        </tr>
+
+        <tr>
+            <td valign="top" class="TableOldSettingView">
+                <b>Session controls:</b>
+            </td>
+            <td class="TableOldSettingView">
+                <pre>@Html.Raw(ViewBag.RestoreJSONSessionControls)</pre>
+            </td>
+            <td valign="top" class="TableNewSettingView">
+                <b>Session controls:</b>
+            </td>
+            <td class="TableNewSettingView">
+                <pre>@Html.Raw(ViewBag.NewJSONSessionControls)</pre>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2" class="TableOldSettingView">
+                <hr />
+            </td>
+            <td colspan="2" class="TableNewSettingView">
+                <hr />
+            </td>
+        </tr>
+
+    </table>
+    <div class="form-group" style="padding-top:15px">
+        <h4 class="filterheaderstyle">&nbsp;</h4>
+    </div>
+</div>

@@ -1,0 +1,12 @@
+User.Read.All > für Change Policy!
+Policy.Read.All > für das Daily backup!
+Policy.ReadWrite.ConditionalAccess > für den restore!
+
+$GraphAppID = "80c2a418-bd8d-4729-9daa-7f9d31529d03"
+$GraphAppName = "CA-Backup"
+$PermissionName = Oben genannten Permissions
+Connect-AzureAD
+$MSI = (Get-AzureADServicePrincipal -Filter "displayName eq '$GraphAppName'")
+$GraphServicePrincipal = Get-AzureADServicePrincipal -Filter "appId eq '$GraphAppId'"
+$AppRole = $GraphServicePrincipal.AppRoles | Where-Object {$_.Value -eq $PermissionName -and $_.AllowedMemberTypes -contains "Application"}
+New-AzureAdServiceAppRoleAssignment -ObjectId $MSI.ObjectId -PrincipalId $MSI.ObjectId -ResourceId $GraphServicePrincipal.ObjectId -Id $AppRole.Id
