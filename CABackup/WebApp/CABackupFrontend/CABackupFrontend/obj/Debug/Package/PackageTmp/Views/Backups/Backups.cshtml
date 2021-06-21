@@ -1,0 +1,55 @@
+﻿
+@{
+    ViewBag.Title = "Conditional access policy backups";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="jumbotron">
+    <h1>Available backups</h1>
+    <p>In that section, you can find all available backups. Keep in mind, there are two different backup types configured:</p>
+    <ul>
+        <li>Daily backups</li>
+        <li>On-change backups</li>
+    </ul>
+    <p>Here, you also have the ability, to delete/view backups and start the restore process.</p>
+</div>
+
+<hr />
+
+@using (Html.BeginForm())
+{
+    <center>
+        <div class="MTGridSizeFull">
+            <div style="text-align:right">
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+            </div>
+            <div class="well MTGridHeader">
+                <div class="form-group">
+                    <h4 class="filterheaderstyle">Filtered by:</h4>
+                </div>
+                <div class="form-inline MTGridInner">
+                    <div class="form-group">
+                        Type: &nbsp;
+                        <select name="ddlbackuptype" class="form-control" data-mvcgrid-type="filter" data-mvcgrid-option="BackupType">
+                            <option value=""></option>
+                            <option value="CABackupChanges">CABackupChanges</option>
+                            <option value="CABackupDaily">CABackupDaily</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="padding-left:10px">
+                        Policy: &nbsp;
+                        <input type="text" class="form-control" data-mvcgrid-type="filter" data-mvcgrid-option="Policy" placeholder="Not case sensitive" />
+                    </div>
+                    <div class="form-group" style="padding-left:10px">
+                        <button type="button" class="btn btn-success" data-mvcgrid-apply-filter="click">Apply</button>
+                    </div>
+                </div>
+                <div class="form-group" style="padding-top:15px">
+                    <h4 class="filterheaderstyle">&nbsp;</h4>
+                </div>
+            </div>
+            @Html.MVCGrid("CABackups")
+        </div>
+    </center>
+}
+

@@ -5,35 +5,35 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <_PublishTargetUrl>C:\GitHub\Private\AzureSolutions\CABackup\WebApp\CABackupFrontend\CABackupFrontend\bin\app.publish\</_PublishTargetUrl>
-    <History>True|2021-06-09T10:03:21.3556133Z;</History>
+    <History>True|2021-06-15T12:38:02.5010593Z;True|2021-06-15T13:35:52.9897227+02:00;True|2021-06-14T17:05:46.2376783+02:00;True|2021-06-14T16:01:01.4616831+02:00;True|2021-06-14T15:52:36.9098413+02:00;True|2021-06-14T15:41:57.7922601+02:00;False|2021-06-14T15:33:07.4698629+02:00;False|2021-06-14T15:29:47.7907345+02:00;False|2021-06-14T15:29:10.4766027+02:00;False|2021-06-14T15:28:56.3303054+02:00;True|2021-06-14T15:13:06.5683151+02:00;True|2021-06-14T14:52:46.5146179+02:00;True|2021-06-14T13:58:25.2526037+02:00;True|2021-06-14T12:09:50.9419186+02:00;True|2021-06-09T12:03:21.3556133+02:00;</History>
   </PropertyGroup>
   <ItemGroup>
     <File Include="ApplicationInsights.config">
       <publishTime>06/09/2021 11:45:05</publishTime>
     </File>
     <File Include="bin/Antlr3.Runtime.dll">
-      <publishTime>09/10/2013 18:29:20</publishTime>
+      <publishTime>10/09/2013 18:29:20</publishTime>
     </File>
     <File Include="bin/Antlr3.Runtime.pdb">
-      <publishTime>09/10/2013 18:29:20</publishTime>
+      <publishTime>10/09/2013 18:29:20</publishTime>
     </File>
     <File Include="bin/Azure.Core.dll">
-      <publishTime>05/06/2021 22:44:36</publishTime>
+      <publishTime>06/05/2021 22:44:36</publishTime>
     </File>
     <File Include="bin/Azure.Identity.dll">
-      <publishTime>05/12/2021 19:57:18</publishTime>
+      <publishTime>12/05/2021 19:57:18</publishTime>
     </File>
     <File Include="bin/Azure.Security.KeyVault.Keys.dll">
       <publishTime>10/30/2019 21:34:48</publishTime>
     </File>
     <File Include="bin/Azure.Security.KeyVault.Secrets.dll">
-      <publishTime>08/12/2020 02:01:40</publishTime>
+      <publishTime>12/08/2020 02:01:40</publishTime>
     </File>
     <File Include="bin/CABackupFrontend.dll">
-      <publishTime>06/09/2021 12:03:18</publishTime>
+      <publishTime>06/15/2021 14:49:58</publishTime>
     </File>
     <File Include="bin/CABackupFrontend.pdb">
-      <publishTime>06/09/2021 12:03:18</publishTime>
+      <publishTime>06/15/2021 14:49:58</publishTime>
     </File>
     <File Include="bin/Cosmos.CRTCompat.dll">
       <publishTime>07/14/2020 11:38:10</publishTime>
@@ -78,7 +78,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>09/15/2020 20:09:30</publishTime>
     </File>
     <File Include="bin/Microsoft.AspNet.TelemetryCorrelation.dll">
-      <publishTime>07/02/2020 21:36:22</publishTime>
+      <publishTime>02/07/2020 21:36:22</publishTime>
     </File>
     <File Include="bin/Microsoft.Azure.Cosmos.Table.dll">
       <publishTime>08/19/2020 08:25:16</publishTime>
@@ -93,7 +93,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>09/13/2019 02:28:52</publishTime>
     </File>
     <File Include="bin/Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll">
-      <publishTime>07/08/2020 21:52:58</publishTime>
+      <publishTime>08/07/2020 21:52:58</publishTime>
     </File>
     <File Include="bin/Microsoft.Configuration.ConfigurationBuilders.Azure.dll">
       <publishTime>02/21/2020 00:55:38</publishTime>
@@ -120,7 +120,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>07/25/2012 13:48:56</publishTime>
     </File>
     <File Include="bin/MVCGrid.dll">
-      <publishTime>03/07/2017 23:57:54</publishTime>
+      <publishTime>07/03/2017 23:57:54</publishTime>
     </File>
     <File Include="bin/Newtonsoft.Json.dll">
       <publishTime>03/17/2021 20:03:36</publishTime>
@@ -165,10 +165,10 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>05/19/2020 01:40:20</publishTime>
     </File>
     <File Include="bin/roslyn/Microsoft.DiaSymReader.Native.amd64.dll">
-      <publishTime>12/05/2017 01:36:44</publishTime>
+      <publishTime>05/12/2017 01:36:44</publishTime>
     </File>
     <File Include="bin/roslyn/Microsoft.DiaSymReader.Native.x86.dll">
-      <publishTime>12/05/2017 01:36:44</publishTime>
+      <publishTime>05/12/2017 01:36:44</publishTime>
     </File>
     <File Include="bin/roslyn/Microsoft.Managed.Core.targets">
       <publishTime>05/19/2020 01:40:20</publishTime>
@@ -219,13 +219,13 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>02/19/2020 10:05:18</publishTime>
     </File>
     <File Include="bin/System.Collections.Immutable.dll">
-      <publishTime>11/05/2016 04:55:36</publishTime>
+      <publishTime>05/11/2016 04:55:36</publishTime>
     </File>
     <File Include="bin/System.Diagnostics.DiagnosticSource.dll">
       <publishTime>09/13/2019 02:41:32</publishTime>
     </File>
     <File Include="bin/System.Memory.Data.dll">
-      <publishTime>04/08/2021 16:45:54</publishTime>
+      <publishTime>08/04/2021 16:45:54</publishTime>
     </File>
     <File Include="bin/System.Memory.dll">
       <publishTime>02/19/2020 10:05:18</publishTime>
@@ -258,7 +258,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>11/28/2018 13:59:46</publishTime>
     </File>
     <File Include="bin/System.Web.Optimization.dll">
-      <publishTime>02/11/2014 16:26:04</publishTime>
+      <publishTime>11/02/2014 16:26:04</publishTime>
     </File>
     <File Include="bin/System.Web.Razor.dll">
       <publishTime>11/28/2018 14:00:12</publishTime>
@@ -273,7 +273,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>11/28/2018 14:04:24</publishTime>
     </File>
     <File Include="bin/WebActivatorEx.dll">
-      <publishTime>10/05/2016 13:11:52</publishTime>
+      <publishTime>05/10/2016 13:11:52</publishTime>
     </File>
     <File Include="bin/WebGrease.dll">
       <publishTime>01/23/2014 14:57:34</publishTime>
@@ -318,10 +318,10 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>06/09/2021 10:01:43</publishTime>
     </File>
     <File Include="Content/img/20190323_hannes_0007-2048x1366 %281%29.jpg">
-      <publishTime>06/02/2021 19:49:20</publishTime>
+      <publishTime>02/06/2021 19:49:20</publishTime>
     </File>
     <File Include="Content/img/logo.png">
-      <publishTime>06/02/2021 12:52:34</publishTime>
+      <publishTime>02/06/2021 12:52:34</publishTime>
     </File>
     <File Include="Content/Site.css">
       <publishTime>05/28/2021 10:35:21</publishTime>
@@ -663,16 +663,16 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>06/07/2021 17:23:25</publishTime>
     </File>
     <File Include="Views/Backups/BackupRestore.cshtml">
-      <publishTime>06/07/2021 11:36:12</publishTime>
+      <publishTime>06/15/2021 14:49:41</publishTime>
     </File>
     <File Include="Views/Backups/Backups.cshtml">
       <publishTime>05/31/2021 14:49:41</publishTime>
     </File>
     <File Include="Views/Home/About.cshtml">
-      <publishTime>06/02/2021 20:07:56</publishTime>
+      <publishTime>02/06/2021 20:07:56</publishTime>
     </File>
     <File Include="Views/Home/Contact.cshtml">
-      <publishTime>06/02/2021 20:10:35</publishTime>
+      <publishTime>02/06/2021 20:10:35</publishTime>
     </File>
     <File Include="Views/Home/HeaderInformations.cshtml">
       <publishTime>06/09/2021 11:32:57</publishTime>
@@ -684,7 +684,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>06/09/2021 10:17:36</publishTime>
     </File>
     <File Include="Views/Settings/Setting.cshtml">
-      <publishTime>06/09/2021 10:16:15</publishTime>
+      <publishTime>01/01/0001 00:00:00</publishTime>
     </File>
     <File Include="Views/Shared/Error.cshtml">
       <publishTime>05/28/2021 10:35:21</publishTime>
@@ -699,7 +699,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>05/28/2021 10:35:21</publishTime>
     </File>
     <File Include="Web.config">
-      <publishTime>06/09/2021 12:03:19</publishTime>
+      <publishTime>06/15/2021 13:35:52</publishTime>
     </File>
   </ItemGroup>
 </Project>

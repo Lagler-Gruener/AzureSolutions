@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<sitemanifest>
+  <IisApp path="C:\GitHub\Private\AzureSolutions\CABackup\WebApp\CABackupFrontend\CABackupFrontend\obj\Debug\Package\PackageTmp" />
+  <setAcl path="C:\GitHub\Private\AzureSolutions\CABackup\WebApp\CABackupFrontend\CABackupFrontend\obj\Debug\Package\PackageTmp" setAclResourceType="Directory" />
+  <setAcl path="C:\GitHub\Private\AzureSolutions\CABackup\WebApp\CABackupFrontend\CABackupFrontend\obj\Debug\Package\PackageTmp" setAclUser="anonymousAuthenticationUser" setAclResourceType="Directory" />
+</sitemanifest>

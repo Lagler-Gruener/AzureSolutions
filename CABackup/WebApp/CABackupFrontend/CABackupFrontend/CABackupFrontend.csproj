@@ -441,7 +441,8 @@
     <Content Include="Content\bootstrap-grid.min.css.map" />
     <Content Include="Content\bootstrap-grid.css.map" />
     <Content Include="ApplicationInsights.config" />
-    <None Include="Properties\PublishProfiles\CA-Backup-Portal - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\CA-Backup-Portalwytsmdb6jv4nm - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Include="Scripts\jquery-3.6.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.6.0.js" />
     <Content Include="Scripts\jquery-3.6.0.min.js" />

@@ -85,6 +85,7 @@ namespace CABackupFrontend.Controllers
                 ViewBag.RestorePolicyID = (string)backupdetails["id"];
                 ViewBag.RestorePolicyname = (string)backupdetails["displayName"];
                 ViewBag.RestorePolicystate = (string)backupdetails["state"];
+
                 if (backupdetail[0].modifiedby == "")
                 {
                     ViewBag.ModifiedBy = "Unknown";
@@ -187,16 +188,20 @@ namespace CABackupFrontend.Controllers
 
         public async Task<ActionResult> RestoreNewPolicy(string partitionkey, string rowkey)
         {
+            string upn = Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
+
             CA_Backup_Model modelclass = new CA_Backup_Model(CABackupFrontend.MvcApplication.Connectionstring);
-            await modelclass.Restoretonewpolicy(partitionkey, rowkey);
+            await modelclass.Restoretonewpolicy(partitionkey, rowkey, upn);
 
             return View("Backups");
         }
 
         public async Task<ActionResult> RestorePolicy(string partitionkey, string rowkey)
         {
+            string upn = Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
+
             CA_Backup_Model modelclass = new CA_Backup_Model(CABackupFrontend.MvcApplication.Connectionstring);
-            await modelclass.Restoretoexistingpolicy(partitionkey, rowkey);
+            await modelclass.Restoretoexistingpolicy(partitionkey, rowkey, upn);
 
             return View("Backups");
         }

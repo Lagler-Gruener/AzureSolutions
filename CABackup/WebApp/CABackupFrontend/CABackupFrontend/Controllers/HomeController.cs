@@ -10,7 +10,9 @@ namespace CABackupFrontend.Controllers
     public class HomeController : Controller
     {
         public ActionResult Index()
-        {            
+        {
+            string a = Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
+
             return View();
         }
         

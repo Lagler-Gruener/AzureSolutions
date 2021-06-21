@@ -7,15 +7,24 @@ using System.Web.Mvc;
 
 namespace CABackupFrontend.Controllers
 {
+    public class SettingsViewModel
+    {
+        public listsettingsrestorevalidation validationsettings { get; set; }
+        public listsettingsimportconfigurations importconfigurationsettings { get; set; }
+    }
+
     public class SettingsController : Controller
     {
         // GET: Settings
         public ActionResult Setting()
         {
             CA_Backup_Model modelclass = new CA_Backup_Model(CABackupFrontend.MvcApplication.Connectionstring);
-            listrestorevalidation settings = modelclass.GetValidationSettings();
 
-            return View(settings);
+            SettingsViewModel viewmodel = new SettingsViewModel();
+            viewmodel.validationsettings = modelclass.GetValidationSettings();
+            viewmodel.importconfigurationsettings = modelclass.GetConfigurationVersion();
+
+            return View(viewmodel);
         }
 
         public ActionResult NewTranslation()
@@ -33,7 +42,7 @@ namespace CABackupFrontend.Controllers
                 NewTranslationSettings.PartitionKey = NewTranslationSettings.Function + ":" + NewTranslationSettings.Setting;
                 modelclass.AddNewTranslationSetting(NewTranslationSettings);
 
-                return View("Setting");
+                return RedirectToAction("Setting", "Settings");
             }
 
             return View("NewTranslation");
@@ -51,15 +60,22 @@ namespace CABackupFrontend.Controllers
 
             modelclass.RemoveTranslationSetting(removeentrylist);
 
-            return View("Setting");
+            return RedirectToAction("Setting", "Settings");
         }
 
-        public ActionResult SaveOverrideValidation(listrestorevalidation inputdata)
+        public ActionResult SaveOverrideValidation(CABackupFrontend.Controllers.SettingsViewModel inputdata)
         {
             CA_Backup_Model modelclass = new CA_Backup_Model(CABackupFrontend.MvcApplication.Connectionstring);
-            modelclass.UpdateValidationSettings(inputdata);
+            modelclass.UpdateValidationSettings(inputdata.validationsettings);
 
-            return View("Setting");            
+            return RedirectToAction("Setting", "Settings");
+        }
+
+        public ActionResult ImportConfiguration()
+        {
+            CA_Backup_Model modelclass = new CA_Backup_Model(CABackupFrontend.MvcApplication.Connectionstring);
+            modelclass.UpdateConfigSettings();
+            return RedirectToAction("Setting", "Settings");
         }
     }
 }

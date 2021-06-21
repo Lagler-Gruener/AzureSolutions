@@ -5,7 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Configuration;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -45,11 +47,19 @@ namespace CABackupFrontend.Models
 
     }
 
-    public class listrestorevalidation :TableEntity
+    public class listsettingsrestorevalidation :TableEntity
     {
         public Boolean state { get; set; }
         [DataType(DataType.MultilineText)]
         public string email { get; set; }
+    }
+
+    public class listsettingsimportconfigurations :TableEntity
+    {
+        public bool updateavailable { get; set; }
+        public string version { get; set; }
+
+        public string newversion { get; set; }
     }
 
     public class CA_Backup_Model
@@ -158,13 +168,13 @@ namespace CABackupFrontend.Models
             return translationsettings;
         }
 
-        public listrestorevalidation GetValidationSettings()
+        public listsettingsrestorevalidation GetValidationSettings()
         {
-            listrestorevalidation validationsetting = new listrestorevalidation();
+            listsettingsrestorevalidation validationsetting = new listsettingsrestorevalidation();
 
-            TableQuery<listrestorevalidation> query;
+            TableQuery<listsettingsrestorevalidation> query;
 
-            query = new TableQuery<listrestorevalidation>().Where(
+            query = new TableQuery<listsettingsrestorevalidation>().Where(
                                                         TableQuery.CombineFilters(
                                                         TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "config"),
                                                         TableOperators.And,
@@ -183,24 +193,68 @@ namespace CABackupFrontend.Models
             return validationsetting;
         }
 
-        public void UpdateValidationSettings(listrestorevalidation settings)
+        public listsettingsimportconfigurations GetConfigurationVersion()
         {
-            TableQuery<listrestorevalidation> query;
+            listsettingsimportconfigurations validationsetting = new listsettingsimportconfigurations();
+            validationsetting.updateavailable = false;
 
-            query = new TableQuery<listrestorevalidation>().Where(
+
+            TableQuery<listsettingsimportconfigurations> query;
+
+            query = new TableQuery<listsettingsimportconfigurations>().Where(
+                                                        TableQuery.CombineFilters(
+                                                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "config"),
+                                                        TableOperators.And,
+                                                        TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "configversion")));
+
+
+            var queryresult = tableconfiguration.ExecuteQuery(query);
+
+            string availableversion = "";
+            string currentversion = "";
+            foreach (var item in queryresult)
+            {
+                currentversion = item.version;
+                validationsetting.version = item.version;
+            }
+
+            WebClient client = new WebClient();
+            Stream stream = client.OpenRead("https://raw.githubusercontent.com/Lagler-Gruener/Sol-CABackupDeploy/main/StorageAccount/configuration/version");
+            using (var reader = new StreamReader(stream))
+            {
+                while (!reader.EndOfStream)
+                {
+                    availableversion = reader.ReadLine();
+                    validationsetting.newversion = reader.ReadLine();
+                }
+            }
+
+            if (availableversion != currentversion)
+            {
+                validationsetting.updateavailable = true;
+            }
+
+            return validationsetting;
+        }
+
+        public void UpdateValidationSettings(listsettingsrestorevalidation settings)
+        {
+            TableQuery<listsettingsrestorevalidation> query;
+
+            query = new TableQuery<listsettingsrestorevalidation>().Where(
                                                         TableQuery.CombineFilters(
                                                         TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "config"),
                                                         TableOperators.And,
                                                         TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "overridepolicyvalidate")));
 
-            foreach (listrestorevalidation entity in tableconfiguration.ExecuteQuery(query))
+            foreach (listsettingsrestorevalidation entity in tableconfiguration.ExecuteQuery(query))
             {
                 entity.state = settings.state;
                 entity.email = settings.email;
-                TableOperation update = TableOperation.Replace(entity);
+                TableOperation update = TableOperation.InsertOrReplace(entity);
                 tableconfiguration.Execute(update);
             }
-        }
+        }        
 
         public void UpdateBackupDetails(string partitionkey, string rowkey)
         {
@@ -218,9 +272,97 @@ namespace CABackupFrontend.Models
             foreach (listcabackupdetails entity in table.ExecuteQuery(query))
             {
                 entity.BackupRestoreing = "true";
-                TableOperation update = TableOperation.Replace(entity);
+                TableOperation update = TableOperation.InsertOrReplace(entity);
                 table.Execute(update);
             }
+        }
+
+        public void UpdateConfigSettings()
+        {
+            WebClient client = new WebClient();
+
+            #region Update translation settings
+            Stream streamsettings = client.OpenRead("https://raw.githubusercontent.com/Lagler-Gruener/Sol-CABackupDeploy/main/StorageAccount/configuration/catranslation.csv");
+            int i = 0;
+            using (var reader = new StreamReader(streamsettings))
+            {
+                try
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var line = reader.ReadLine();
+                        if (i > 0)
+                        {
+                            var values = line.Split(',');
+
+                            listcabackuptranslation translation = new listcabackuptranslation();
+                            translation.PartitionKey = values[3] + ":" + values[7];
+                            translation.RowKey = values[1];
+                            translation.Function = values[3];
+                            translation.Section = values[5];
+                            translation.Setting = values[7];
+                            translation.Translation = values[9];
+
+                            TableOperation querytranslation = TableOperation.InsertOrReplace(translation);
+                            tabletranslation.Execute(querytranslation);
+                        }
+                        i++;
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    throw new Exception(ex.Message);
+                }
+            }            
+
+            #endregion
+
+            #region Update validation settingsto default if not set
+            TableQuery<listsettingsrestorevalidation> query;
+
+            query = new TableQuery<listsettingsrestorevalidation>().Where(
+                                                        TableQuery.CombineFilters(
+                                                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "config"),
+                                                        TableOperators.And,
+                                                        TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "overridepolicyvalidate")));
+
+
+            var queryresult = tableconfiguration.ExecuteQuery(query);
+
+            if (queryresult.Count< listsettingsrestorevalidation>() == 0)
+            {
+                listsettingsrestorevalidation validationsetting = new listsettingsrestorevalidation();
+                validationsetting.PartitionKey = "config";
+                validationsetting.RowKey = "overridepolicyvalidate";
+                validationsetting.email = "";
+                validationsetting.state = false;
+
+                TableOperation insertvalidationsetting = TableOperation.InsertOrReplace(validationsetting);
+                tableconfiguration.Execute(insertvalidationsetting);
+            }
+
+            #endregion
+
+            #region Update version number
+            string newversion = "0.0";
+            Stream streamversion = client.OpenRead("https://raw.githubusercontent.com/Lagler-Gruener/Sol-CABackupDeploy/main/StorageAccount/configuration/version");
+            using (var reader = new StreamReader(streamversion))
+            {
+                while (!reader.EndOfStream)
+                {
+                    newversion = reader.ReadLine();
+                }
+            }
+
+            listsettingsimportconfigurations entity = new listsettingsimportconfigurations();
+            entity.PartitionKey = "config";
+            entity.RowKey = "configversion";
+            entity.version = newversion;
+            
+            TableOperation update = TableOperation.InsertOrReplace(entity);
+            tableconfiguration.Execute(update);            
+            #endregion
         }
 
         private string translatechanges(string policysettings)
@@ -242,20 +384,26 @@ namespace CABackupFrontend.Models
 
                 foreach (listcabackuptranslation item in translationsettings)
                 {
-                    if (null != backupdetails[item.Section.ToString()][item.Function.ToString()][item.Setting.ToString()])
+                    try
                     {
-                        if ((string)backupdetails[item.Section.ToString()][item.Function.ToString()][item.Setting.ToString()] == (string)item.RowKey)
+                        if (null != backupdetails[item.Section.ToString()][item.Function.ToString()][item.Setting.ToString()])
                         {
-                            if (item.Translation == "-removekey-")
+                            if ((string)backupdetails[item.Section.ToString()][item.Function.ToString()][item.Setting.ToString()] == (string)item.RowKey)
                             {
-                                JObject selectedfunction = (JObject)backupdetails[item.Section.ToString()][item.Function.ToString()];
-                                selectedfunction.Property(item.Setting.ToString()).Remove();
-                            }
-                            else
-                            {
-                                backupdetails[item.Section.ToString()][item.Function.ToString()][item.Setting.ToString()] = item.Translation;
+                                if (item.Translation == "-removekey-")
+                                {
+                                    JObject selectedfunction = (JObject)backupdetails[item.Section.ToString()][item.Function.ToString()];
+                                    selectedfunction.Property(item.Setting.ToString()).Remove();
+                                }
+                                else
+                                {
+                                    backupdetails[item.Section.ToString()][item.Function.ToString()][item.Setting.ToString()] = item.Translation;
+                                }
                             }
                         }
+                    }
+                    catch (Exception)
+                    {                       
                     }
                 }
 
@@ -265,7 +413,7 @@ namespace CABackupFrontend.Models
             return "";
         }
 
-        public async Task<bool> Restoretonewpolicy(string partitionkey, string rowkey)
+        public async Task<bool> Restoretonewpolicy(string partitionkey, string rowkey, string upn)
         {
             CA_Backup_Model model = new CA_Backup_Model(CABackupFrontend.MvcApplication.Connectionstring);
             List<listcabackupdetails> backupdetail = model.GetBackupDetails(partitionkey, rowkey);
@@ -283,9 +431,7 @@ namespace CABackupFrontend.Models
                 backupdetails = JObject.Parse(backupdetail[0].CABackup);
                 backupdetails["displayName"] = backupdetails["displayName"].ToString() + ".restore(" + DateTime.Now.ToShortDateString().ToString() + ")";
                 backupdetails["state"] = "enabledForReportingButNotEnforced";
-            }
-
-            Claim upn = ClaimsPrincipal.Current.FindFirst(ClaimsPrincipal.Current.Identities.First().NameClaimType);
+            }            
 
             var jsonData = System.Text.Json.JsonSerializer.Serialize(new
             {
@@ -294,7 +440,7 @@ namespace CABackupFrontend.Models
                 data = backupdetails.ToString(),
                 policyrowkey = rowkey,
                 policypartitionkey = partitionkey,
-                requestor = upn.Value.ToString()
+                requestor = upn
             });
 
             using (var client = new HttpClient())
@@ -311,7 +457,7 @@ namespace CABackupFrontend.Models
             return true;
         }
 
-        public async Task<bool> Restoretoexistingpolicy(string partitionkey, string rowkey)
+        public async Task<bool> Restoretoexistingpolicy(string partitionkey, string rowkey, string upn)
         {
             CA_Backup_Model model = new CA_Backup_Model(CABackupFrontend.MvcApplication.Connectionstring);
             List<listcabackupdetails> backupdetail = model.GetBackupDetails(partitionkey, rowkey);
@@ -329,8 +475,6 @@ namespace CABackupFrontend.Models
                 backupdetails["displayName"] = backupdetails["displayName"].ToString() + ".restore(" + DateTime.Now.ToShortDateString().ToString() + ")";
             }
 
-            Claim upn = ClaimsPrincipal.Current.FindFirst(ClaimsPrincipal.Current.Identities.First().NameClaimType);
-
             var jsonData = System.Text.Json.JsonSerializer.Serialize(new
             {
 
@@ -338,7 +482,7 @@ namespace CABackupFrontend.Models
                 data = backupdetails.ToString(),
                 policyrowkey = rowkey,
                 policypartitionkey = partitionkey,
-                requestor = upn.Value.ToString()
+                requestor = upn
             });
 
             using (var client = new HttpClient())

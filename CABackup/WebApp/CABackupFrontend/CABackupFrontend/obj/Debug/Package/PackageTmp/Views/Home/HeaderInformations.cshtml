@@ -1,0 +1,39 @@
+﻿
+@{
+    ViewBag.Title = "HeaderInformations";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>HeaderInformations</h2>
+
+<div class="text-center">
+    <h1 class="display-4">Request Header Inspector</h1>
+    <div>
+    	<p>
+        	<b>X-MS-CLIENT-PRINCIPAL-NAME:</b><br />
+        	@Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"]
+    	</p>
+    	<p>
+        	<b>X-MS-CLIENT-PRINCIPAL-ID:</b><br />
+        	@Request.Headers["X-MS-CLIENT-PRINCIPAL-ID"]
+    	</p>
+    	<p>
+        	<b>X-MS-TOKEN-AAD-REFRESH-TOKEN:</b><br />
+        	@Request.Headers["X-MS-TOKEN-AAD-ID-TOKEN"]
+    	</p>
+    	<p>
+        	<b>X-MS-TOKEN-AAD-ACCESS-TOKEN:</b><br />
+        	@Request.Headers["X-MS-TOKEN-AAD-ACCESS-TOKEN"]
+    	</p>
+
+    	<p>
+        	<b>X-MS-TOKEN-AAD-EXPIRES-ON:</b><br />
+        	@Request.Headers["X-MS-TOKEN-AAD-EXPIRES-ON"]
+    	</p>
+
+    	<p>
+        	<b>X-MS-TOKEN-AAD-REFRESH-TOKEN:</b><br />
+        	@Request.Headers["X-MS-TOKEN-AAD-REFRESH-TOKEN"]
+    	</p>
+    </div>
+</div>
