@@ -1,0 +1,699 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MVCGrid</name>
+    </assembly>
+    <members>
+        <member name="P:MVCGrid.Interfaces.IMVCGridColumn.HeaderText">
+            <summary>
+            Header text to display for the current column, if different from ColumnName.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridColumn.ColumnName">
+            <summary>
+            A unique name for this column
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridColumn.EnableSorting">
+            <summary>
+            Enables sorting on this column
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridColumn.HtmlEncode">
+            <summary>
+            Disables html encoding on the data for the current cell. Turn this off if your ValueExpression or ValueTemplate returns HTML.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridColumn.EnableFiltering">
+            <summary>
+            Enables filtering on this column
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridColumn.Visible">
+            <summary>
+            Indicates whether column is visible.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridColumn.SortColumnData">
+            <summary>
+            Object to pass to QueryOptions when this column is sorted on. Only specify if different from ColumnName
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridColumn.AllowChangeVisibility">
+            <summary>
+            Gets or sets a value indicating whether the column visibility can be changed.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithRetrieveDataMethod(System.Func{MVCGrid.Models.GridContext,MVCGrid.Models.QueryResult{`0}})">
+            <summary>
+            This is the method that will actually query the data to populate the grid. Use entity framework, a module from you IoC container, direct SQL queries, etc. to get the data. Inside the providee GridContext there is a QueryOptions object which will be populated with the currently requested sorting, paging, and filtering options which you must take into account. See the QueryOptions documentation below. You must return a QueryResult object which takes an enumerable of your type and a count of the total number of records which must be provided if paging is enabled.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithRowCssClassExpression(System.Func{`0,MVCGrid.Models.GridContext,System.String})">
+            <summary>
+            Use this to specify a custom css class based on data for the current row
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithRowCssClassExpression(System.Func{`0,System.String})">
+            <summary>
+            Use this to specify a custom css class based on data for the current row
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithQueryStringPrefix(System.String)">
+            <summary>
+            A prefix to add to all query string parameters for this grid, for when there are more than 1 grids on the same page
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithPreloadData(System.Boolean)">
+            <summary>
+            Enables data loading when the page is first loaded so that the initial ajax request can be skipped.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithQueryOnPageLoad(System.Boolean)">
+            <summary>
+            Specifies if the data should be loaded as soon as the page loads
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithPaging(System.Boolean)">
+            <summary>
+            Enables paging on the grid
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithPaging(System.Boolean,System.Int32)">
+            <summary>
+            Enables paging on the grid
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithPaging(System.Boolean,System.Int32,System.Boolean,System.Int32)">
+            <summary>
+            Enables paging on the grid
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithItemsPerPage(System.Int32)">
+            <summary>
+            Number of items to display on each page
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithSorting(System.Boolean)">
+            <summary>
+            Enables sorting on the grid. Note, sorting must also be enabled on each column where sorting is wanted
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithSorting(System.Boolean,System.String)">
+            <summary>
+            Enables sorting on the grid. Note, sorting must also be enabled on each column where sorting is wanted
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithSorting(System.Boolean,System.String,MVCGrid.Models.SortDirection)">
+            <summary>
+            Enables sorting on the grid. Note, sorting must also be enabled on each column where sorting is wanted
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithDefaultSortColumn(System.String)">
+            <summary>
+            The default column to sort by when no sort is specified
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithDefaultSortDirection(MVCGrid.Models.SortDirection)">
+            <summary>
+            The default order to sort by when no sort is specified
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithNoResultsMessage(System.String)">
+            <summary>
+            Text to display when there are no results.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithClientSideLoadingMessageFunctionName(System.String)">
+            <summary>
+            Name of function to call before ajax call begins
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithClientSideLoadingCompleteFunctionName(System.String)">
+            <summary>
+            Name of function to call before ajax call ends
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithFiltering(System.Boolean)">
+            <summary>
+            Enables filtering on the grid. Note, filtering must also be enabled on each column where filtering is wanted
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithDefaultRenderingEngineName(System.String)">
+            <summary>
+            Sets the default rendering engine name (which should match a name from the RenderingEngines property) which
+            will be used when no rendering engine name is specified in the request
+            </summary>
+            <param name="renderingEngineName">Name of the rendering engine.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.AddRenderingEngine(System.String,System.Type)">
+            <summary>
+            Adds a rendering engine to the list of configured rendering engines.
+            </summary>
+            <param name="name">A unique name.</param>
+            <param name="type">The type.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.AddRenderingEngine(System.String,System.String)">
+            <summary>
+            Adds a rendering engine to the list of configured rendering engines.
+            </summary>
+            <param name="name">A unique name.</param>
+            <param name="type">The type.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithAdditionalSetting(System.String,System.Object)">
+            <summary>
+            Add an arbitrary additional settings
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithoutAdditionalSetting(System.String)">
+            <summary>
+            Remove an additional setting
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithRenderingMode(MVCGrid.Models.RenderingMode)">
+            <summary>
+            The rendering mode to use for this grid. By default it will use the RenderingEngine rendering mode. If you want to use a custom Razor view to display your grid, change this to Controller
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithViewPath(System.String)">
+            <summary>
+            When RenderingMode is set to Controller, this is the path to the razor view to use.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithContainerViewPath(System.String)">
+            <summary>
+            When RenderingMode is set to Controller, this is the path to the container razor view to use.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithErrorMessageHtml(System.String)">
+            <summary>
+            HTML to display in place of the grid when an error occurs
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithAdditionalQueryOptionName(System.String)">
+            <summary>
+            Add a name to additional query options which are additional parameters that can be passed from client to server side
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithAdditionalQueryOptionNames(System.String[])">
+            <summary>
+            Names of additional parameters that can be passed from client to server side
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithPageParameterNames(System.String[])">
+            <summary>
+            Names of page parameters that will be passed from the view
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithAllowChangingPageSize(System.Boolean)">
+            <summary>
+            Allows changing of page size from client-side
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithMaxItemsPerPage(System.Int32)">
+            <summary>
+            Sets the maximum of items per page allowed when AllowChangingPageSize is enabled
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithAuthorizationType(MVCGrid.Models.AuthorizationType)">
+            <summary>
+            Indicated the authorization type. Anonymous access is the default.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithNextButtonCaption(System.String)">
+            <summary>
+            Text to display on the "next" button.
+            </summary>
+            <param name="nextButtonCaption"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithPreviousButtonCaption(System.String)">
+            <summary>
+            Text to display on the "previous" button.
+            </summary>
+            <param name="previousButtonCaption"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithSummaryMessage(System.String)">
+            <summary>
+            Summary text to display in grid footer. Defaults to "Showing {0} to {1} of {2} entries"
+            {0} = first record number shown on page
+            {1} = last record number shown on page
+            {2} = total number of records on all pages
+            </summary>
+            <param name="summaryMessage"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MVCGrid.Models.MVCGridBuilder`1.WithProcessingMessage(System.String)">
+            <summary>
+            Text to display when query is processed
+            </summary>
+            <param name="processingMessage"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithColumnName(System.String)">
+            <summary>
+            A unique name for this column
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithHeaderText(System.String)">
+            <summary>
+            Header text to display for the current column, if different from ColumnName.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithSorting(System.Boolean)">
+            <summary>
+            Enables sorting on this column
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithHtmlEncoding(System.Boolean)">
+            <summary>
+            Disables html encoding on the data for the current cell. Turn this off if your ValueExpression or ValueTemplate returns HTML.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithValueExpression(System.Func{`0,MVCGrid.Models.GridContext,System.String})">
+            <summary>
+            This is how to specify the contents of the current cell. If this contains HTML, set HTMLEncode to false
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithValueExpression(System.Func{`0,System.String})">
+            <summary>
+            This is how to specify the contents of the current cell. If this contains HTML, set HTMLEncode to false
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithPlainTextValueExpression(System.Func{`0,MVCGrid.Models.GridContext,System.String})">
+            <summary>
+            This is how to specify the contents of the current cell when used in an export file, if different that ValueExpression
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithPlainTextValueExpression(System.Func{`0,System.String})">
+            <summary>
+            This is how to specify the contents of the current cell when used in an export file, if different that ValueExpression
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithCellCssClassExpression(System.Func{`0,MVCGrid.Models.GridContext,System.String})">
+            <summary>
+            Use this to return a custom css class based on data for the current cell
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithCellCssClassExpression(System.Func{`0,System.String})">
+            <summary>
+            Use this to return a custom css class based on data for the current cell
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithFiltering(System.Boolean)">
+            <summary>
+            Enables filtering on this column
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithVisibility(System.Boolean)">
+            <summary>
+            Indicates whether column is visible.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithVisibility(System.Boolean,System.Boolean)">
+            <summary>
+            Indicates whether column is visible.
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithValueTemplate(System.String)">
+            <summary>
+            Template for formatting cell value
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithValueTemplate(System.String,System.Boolean)">
+            <summary>
+            Template for formatting cell value
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithSortColumnData(System.Object)">
+            <summary>
+            Object to pass to QueryOptions when this column is sorted on. Only specify if different from ColumnName
+            </summary>
+        </member>
+        <member name="M:MVCGrid.Models.GridColumnBuilder`1.WithAllowChangeVisibility(System.Boolean)">
+            <summary>
+            Gets or sets a value indicating whether the column visibility can be changed.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridContext.Items">
+            <summary>
+            Arbitrary settings for this context
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.RenderingModel.PagingModel">
+            <summary>
+            Paging data. Will be null if paging should not be displayed
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.QueryStringPrefix">
+            <summary>
+            A prefix to add to all query string parameters for this grid, for when there are more than 1 grids on the same page
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.PreloadData">
+            <summary>
+            Enables data loading when the page is first loaded so that the initial ajax request can be skipped.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.QueryOnPageLoad">
+            <summary>
+            Specified if the data should be loaded as soon as the page loads
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.Paging">
+            <summary>
+            Enables paging on the grid
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.ItemsPerPage">
+            <summary>
+            Number of items to display on each page
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.Sorting">
+            <summary>
+            Enables sorting on the grid. Note, sorting must also be enabled on each column where sorting is wanted
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.DefaultSortColumn">
+            <summary>
+            The default column to sort by when no sort is specified
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.DefaultSortDirection">
+            <summary>
+            The default order to sort by when no sort is specified
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.NoResultsMessage">
+            <summary>
+            Text to display when there are no results
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.NextButtonCaption">
+            <summary>
+            Text to display on the "next" button
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.PreviousButtonCaption">
+            <summary>
+            Text to display on the "previous" button
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.SummaryMessage">
+            <summary>
+            Summary text to display in grid footer
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.ProcessingMessage">
+            <summary>
+            Text to display when query is processed
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.ClientSideLoadingMessageFunctionName">
+            <summary>
+            Name of function to call before ajax call begins
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.ClientSideLoadingCompleteFunctionName">
+            <summary>
+            Name of function to call before ajax call ends
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.Filtering">
+            <summary>
+            Enables filtering on the grid. Note, filtering must also be enabled on each column where filtering is wanted
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.AdditionalSettings">
+            <summary>
+            Arbitrary additional settings
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.RenderingMode">
+            <summary>
+            The rendering mode to use for this grid. By default it will use the RenderingEngine rendering mode. If you want to use a custom Razor view to display your grid, change this to Controller
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.ViewPath">
+            <summary>
+            When RenderingMode is set to Controller, this is the path to the razor view to use.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.ContainerViewPath">
+            <summary>
+            When RenderingMode is set to Controller, this is the path to the container razor view to use.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.ErrorMessageHtml">
+            <summary>
+            HTML to display in place of the grid when an error occurs
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.AdditionalQueryOptionNames">
+            <summary>
+            Names of additional parameters that can be passed from client to server side
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.PageParameterNames">
+            <summary>
+            Names of page parameters that will be passed from the view
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.AllowChangingPageSize">
+            <summary>
+            Allows changing of page size from client-side
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.MaxItemsPerPage">
+            <summary>
+            Sets the maximum of items per page allowed when AllowChangingPageSize is enabled
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.AuthorizationType">
+            <summary>
+            Indicated the authorization type. Anonymous access is the default.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.RenderingEngines">
+            <summary>
+            The list of configured rendering engines availble for this grid
+            </summary>
+            <value>
+            The rendering engines, each with a unique name
+            </value>
+        </member>
+        <member name="P:MVCGrid.Interfaces.IMVCGridDefinition.DefaultRenderingEngineName">
+            <summary>
+            The unique rendering engine name to use when none is specified in the request
+            </summary>
+            <value>
+            The default name of the rendering engine.
+            </value>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.ColumnName">
+            <summary>
+            A unique name for this column
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.HeaderText">
+            <summary>
+            Header text to display for the current column, if different from ColumnName.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.ValueTemplate">
+            <summary>
+            Template for formatting cell value
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.ValueExpression">
+            <summary>
+            This is how to specify the contents of the current cell. If this contains HTML, set HTMLEncode to false
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.PlainTextValueExpression">
+            <summary>
+            This is how to specify the contents of the current cell when used in an export file, if different that ValueExpression
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.CellCssClassExpression">
+            <summary>
+            Use this to return a custom css class based on data for the current cell
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.EnableSorting">
+            <summary>
+            Enables sorting on this column
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.HtmlEncode">
+            <summary>
+            Disables html encoding on the data for the current cell. Turn this off if your ValueExpression or ValueTemplate returns HTML.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.EnableFiltering">
+            <summary>
+            Enables filtering on this column
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.Visible">
+            <summary>
+            Indicates whether column is visible.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.SortColumnData">
+            <summary>
+            Object to pass to QueryOptions when this column is sorted on. Only specify if different from ColumnName
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridColumn`1.AllowChangeVisibility">
+            <summary>
+            Gets or sets a value indicating whether the column visibility can be changed.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.RetrieveData">
+            <summary>
+            This is the method that will actually query the data to populate the grid. Use entity framework, a module from you IoC container, direct SQL queries, etc. to get the data. Inside the providee GridContext there is a QueryOptions object which will be populated with the currently requested sorting, paging, and filtering options which you must take into account. See the QueryOptions documentation below. You must return a QueryResult object which takes an enumerable of your type and a count of the total number of records which must be provided if paging is enabled.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.RowCssClassExpression">
+            <summary>
+            Use this to specify a custom css class based on data for the current row
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.QueryStringPrefix">
+            <summary>
+            A prefix to add to all query string parameters for this grid, for when there are more than 1 grids on the same page
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.PreloadData">
+            <summary>
+            Enables data loading when the page is first loaded so that the initial ajax request can be skipped.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.QueryOnPageLoad">
+            <summary>
+            Specified if the data should be loaded as soon as the page loads
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.Paging">
+            <summary>
+            Enables paging on the grid
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.ItemsPerPage">
+            <summary>
+            Number of items to display on each page
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.Sorting">
+            <summary>
+            Enables sorting on the grid. Note, sorting must also be enabled on each column where sorting is wanted
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.DefaultSortColumn">
+            <summary>
+            The default column to sort by when no sort is specified
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.DefaultSortDirection">
+            <summary>
+            The default order to sort by when no sort is specified
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.Filtering">
+            <summary>
+            Enables filtering on the grid. Note, filtering must also be enabled on each column where filtering is wanted
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.NoResultsMessage">
+            <summary>
+            Text to display when there are no results.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.NextButtonCaption">
+            <summary>
+            Text to display on the "next" button.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.PreviousButtonCaption">
+            <summary>
+            Text to display on the "previous" button.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.SummaryMessage">
+            <summary>
+            Summary text to display in grid footer
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.ProcessingMessage">
+            <summary>
+            Text to display when query is processed
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.ClientSideLoadingMessageFunctionName">
+            <summary>
+            Name of function to call before ajax call begins
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.ClientSideLoadingCompleteFunctionName">
+            <summary>
+            Name of function to call before ajax call ends
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.AdditionalSettings">
+            <summary>
+            Arbitrary additional settings
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.RenderingMode">
+            <summary>
+            The rendering mode to use for this grid. By default it will use the RenderingEngine rendering mode. If you want to use a custom Razor view to display your grid, change this to Controller
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.ViewPath">
+            <summary>
+            When RenderingMode is set to Controller, this is the path to the razor view to use.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.ContainerViewPath">
+            <summary>
+            When RenderingMode is set to Controller, this is the path to the container razor view to use.
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.ErrorMessageHtml">
+            <summary>
+            HTML to display in place of the grid when an error occurs
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.AdditionalQueryOptionNames">
+            <summary>
+            Names of additional parameters that can be passed from client to server side
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.PageParameterNames">
+            <summary>
+            Names of page parameters that will be passed from the view
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.AllowChangingPageSize">
+            <summary>
+            Allows changing of page size from client-side
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.MaxItemsPerPage">
+            <summary>
+            Sets the maximum of items per page allowed when AllowChangingPageSize is enabled
+            </summary>
+        </member>
+        <member name="P:MVCGrid.Models.GridDefinition`1.AuthorizationType">
+            <summary>
+            Indicated the authorization type. Anonymous access is the default.
+            </summary>
+        </member>
+    </members>
+</doc>

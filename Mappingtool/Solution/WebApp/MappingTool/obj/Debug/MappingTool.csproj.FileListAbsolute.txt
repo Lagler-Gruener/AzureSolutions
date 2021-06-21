@@ -818,8 +818,8 @@ C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\de\
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\de\System.Web.WebPages.resources.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\de\System.Web.WebPages.Deployment.resources.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\bin\de\System.Web.WebPages.Razor.resources.dll
-C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.csprojAssemblyReference.cache
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.csproj.CoreCompileInputs.cache
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.csproj.CopyComplete
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.dll
 C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.pdb
+C:\GitHub\Private\AzureSolutions\Mappingtool\Solution\WebApp\MappingTool\obj\Debug\MappingTool.csproj.AssemblyReference.cache
